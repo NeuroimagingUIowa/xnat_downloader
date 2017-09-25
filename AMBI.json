@@ -1,0 +1,18 @@
+{
+	"dcm_dir": "/home/james/Downloads",
+	"project": "VOSS_AGING",
+	"subjects": [9],
+	"session_labels": "None",
+	"sessions": "ALL",
+	"zero_pad": 3,
+	"scans": ["anat","func","fmap","dwi","cbf"],
+	"scan_dict" : {
+					    "Field Map": ["fmap", "fieldmap"],
+					    "PU:fMRI SIMON": ["func", "task-simon_bold"],
+					    "PU:fMRI Resting State": ["func", "task-rest_bold"],
+					    "DTI": ["dwi", "dwi"],
+					    "3D_ASL": ["cbf", "asl-cbf"],
+					    "PU:SAG FSPGR BRAVO": ["anat", "T1w"],
+					    "Cerebral Blood Flow": ["cbf", "cbf"]
+					}
+}

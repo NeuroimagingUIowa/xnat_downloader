@@ -199,9 +199,9 @@ def main():
     logging.info('###################################')
 
     if subjects == 'ALL':
-        proj_obj = central.select(project)
+        proj_obj = central.select.project(project)
         subjects = [subject.label() for subject in proj_obj.subjects()]
-        
+
     for subject in subjects:
         sub_xnat_path = '/project/{project}/subjects/{subject}'.format(subject=subject, project=project)
         sub_obj = central.select(sub_xnat_path)

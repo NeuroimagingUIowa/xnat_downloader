@@ -244,15 +244,17 @@ def main():
                     logging.warn('\t\tDirectory not empty, skipping download')
                 else:
                     print('Downloading {subject}:{session}:{scan}'.format(subject=subject,session=ses_label,scan=scan_type[0]))
-                    central.select(scan_xnat_path)[0].get(bids_dir)
-                    # Log the path where the file was downloaded for ground truth.
-                    with open(os.path.join(bids_dir,'output.txt'), 'w+') as output_file:
-                        output_file.write('Data From:\n{}'.format(scan_xnat_path))
+                    # download the gif and the dcms
+                    for idx in range(2):
+                        central.select(scan_xnat_path)[idx].get(bids_dir)
+                        # Log the path where the file was downloaded for ground truth.
+                        with open(os.path.join(bids_dir,'output.txt'), 'w+') as output_file:
+                            output_file.write('Data From:\n{}\n'.format(scan_xnat_path))
 
-                    # unzip the downloaded file in the same directory
-                    zip_ref = zipfile.ZipFile(os.path.join(bids_dir, central.select(scan_xnat_path).get()[0])+'.zip', 'r')
-                    zip_ref.extractall(bids_dir)
-                    zip_ref.close()
+                        # unzip the downloaded file in the same directory
+                        zip_ref = zipfile.ZipFile(os.path.join(bids_dir, central.select(scan_xnat_path).get()[idx])+'.zip', 'r')
+                        zip_ref.extractall(bids_dir)
+                        zip_ref.close()
 
 # just download both and sort them later
 # central.select('/project/VOSS_AGING/subjects/9/experiments/RPACS_E19139/scans/1/resources').get()

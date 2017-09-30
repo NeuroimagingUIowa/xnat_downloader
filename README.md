@@ -1,12 +1,12 @@
 # xnat_downloader
 
-## Install
+## Install (within the github directory)
 
-```pip install -r requirements.txt```
+```python setup.py install```
 
 ## Run
 
-```xnat_downloader.py -i <input>.json```
+```xnat_downloader -i <input>.json```
 
 ## Formatting the json
 

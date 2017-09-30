@@ -7,59 +7,23 @@ import logging
 from datetime import datetime
 import zipfile
 
-def parse_cmdline():
-    """Parse command line arguments."""
-    import argparse
-    parser = argparse.ArgumentParser(description=('download_xnat.py downloads xnat '
-                                                  'dicoms and saves them in BIDs '
-                                                  'compatible directory format'))
-    # Required arguments
-    requiredargs = parser.add_argument_group('Required arguments')
-    requiredargs.add_argument('-i', '--input_json',
-                              dest='input_json', required=True,
-                              help='json file defining inputs for this script.')
-
-    return parser
-
-
-def parse_json(json_file):
-    """Parse json file."""
-    import json
-    with open(json_file) as json_input:
-        input_dict = json.load(json_input)
-        # print(str(input_dict))
-    mandatory_keys = ['scan_dict', 'dcm_dir', 'sessions',
-                      'session_labels', 'project', 'subjects', 'scans']
-    optional_keys = ['subject_variables_csv', 'zero_pad', 'nii_dir']
-    total_keys = mandatory_keys+optional_keys
-    # print("total_keys: "+str(total_keys))
-    # are there any inputs in the json_file that are not supported?
-    extra_inputs = list(set(input_dict.keys()) - set(total_keys))
-    if extra_inputs:
-        logging.warning('JSON spec key(s) not supported: %s' % str(extra_inputs))
-
-    # are there missing mandatory inputs?
-    missing_inputs = list(set(mandatory_keys) - set(input_dict.keys()))
-    if missing_inputs:
-        raise KeyError('option(s) need to be specified in input file: '
-                       '%s' % str(missing_inputs))
-
-    return input_dict
-
-
-def get_time(session):
+def find_scans(ses_dict, scans, scan_dict):
     """
     purpose:
-        makes a time object
-    inputs:
-        dictionary
-    outputs:
-        time object
+
     """
-    date = session['xnat:date']
-    time = session['xnat:time']
-    xnat_time = datetime.strptime(date+' '+time, '%Y-%m-%d %H:%M:%S')
-    return xnat_time
+    # {'scan_desc1': ('id', 'label'), 'scan_desc2': ('id', 'label')}
+    scan_list = ses_dict['xnat:scans']['xnat:scan']
+    xnat_scans = {scan['xnat:series_description']: (scan['@ID']) for scan in scan_list}
+    wanted_scan_dict = {scan: type for scan, type in scan_dict.items() if scan_dict[scan][0] in scans}
+    download_dict = {scan: (type, xnat_scans[scan]) for scan, type in wanted_scan_dict.items() if scan in xnat_scans}
+    missing_wanted_scans = list(set(wanted_scan_dict.keys()) - set(download_dict.keys()))
+    if missing_wanted_scans:
+        for scan in missing_wanted_scans:
+            logging.warn('\t\tMissing scan: {}'.format(scan))
+
+    # dictionary with tuples ('func', '700')
+    return download_dict
 
 
 def sort_sessions(sub_dict, ses_labels, sessions):
@@ -112,24 +76,43 @@ def sort_sessions(sub_dict, ses_labels, sessions):
     # print('session_info: {}'.format(session_info))
     return session_info
 
-
-def find_scans(ses_dict, scans, scan_dict):
+def get_time(session):
     """
     purpose:
-
+        makes a time object
+    inputs:
+        dictionary
+    outputs:
+        time object
     """
-    # {'scan_desc1': ('id', 'label'), 'scan_desc2': ('id', 'label')}
-    scan_list = ses_dict['xnat:scans']['xnat:scan']
-    xnat_scans = {scan['xnat:series_description']: (scan['@ID']) for scan in scan_list}
-    wanted_scan_dict = {scan: type for scan, type in scan_dict.items() if scan_dict[scan][0] in scans}
-    download_dict = {scan: (type, xnat_scans[scan]) for scan, type in wanted_scan_dict.items() if scan in xnat_scans}
-    missing_wanted_scans = list(set(wanted_scan_dict.keys()) - set(download_dict.keys()))
-    if missing_wanted_scans:
-        for scan in missing_wanted_scans:
-            logging.warn('\t\tMissing scan: {}'.format(scan))
+    date = session['xnat:date']
+    time = session['xnat:time']
+    xnat_time = datetime.strptime(date+' '+time, '%Y-%m-%d %H:%M:%S')
+    return xnat_time
 
-    # dictionary with tuples ('func', '700')
-    return download_dict
+def parse_json(json_file):
+    """Parse json file."""
+    import json
+    with open(json_file) as json_input:
+        input_dict = json.load(json_input)
+        # print(str(input_dict))
+    mandatory_keys = ['scan_dict', 'dcm_dir', 'sessions',
+                      'session_labels', 'project', 'subjects', 'scans']
+    optional_keys = ['subject_variables_csv', 'zero_pad', 'nii_dir']
+    total_keys = mandatory_keys+optional_keys
+    # print("total_keys: "+str(total_keys))
+    # are there any inputs in the json_file that are not supported?
+    extra_inputs = list(set(input_dict.keys()) - set(total_keys))
+    if extra_inputs:
+        logging.warning('JSON spec key(s) not supported: %s' % str(extra_inputs))
+
+    # are there missing mandatory inputs?
+    missing_inputs = list(set(mandatory_keys) - set(input_dict.keys()))
+    if missing_inputs:
+        raise KeyError('option(s) need to be specified in input file: '
+                       '%s' % str(missing_inputs))
+
+    return input_dict
 
 
 def read_sub_csv(sub_csv):
@@ -160,6 +143,21 @@ def make_bids_dir(subject, sub_vars_dict, scan_type, ses_label, scan, BIDs_num_l
     out_dir = os.path.join(dcm_dir, sub_dir)
 
     return out_dir
+
+
+def parse_cmdline():
+    """Parse command line arguments."""
+    import argparse
+    parser = argparse.ArgumentParser(description=('download_xnat.py downloads xnat '
+                                                  'dicoms and saves them in BIDs '
+                                                  'compatible directory format'))
+    # Required arguments
+    requiredargs = parser.add_argument_group('Required arguments')
+    requiredargs.add_argument('-i', '--input_json',
+                              dest='input_json', required=True,
+                              help='json file defining inputs for this script.')
+
+    return parser
 
 
 def main():

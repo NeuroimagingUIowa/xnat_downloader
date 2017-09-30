@@ -243,7 +243,8 @@ def main():
                 else:
                     print('Downloading {subject}:{session}:{scan}'.format(subject=subject,session=ses_label,scan=scan_type[0]))
                     # download the gif and the dcms
-                    for idx in range(2):
+                    # sometimes either the picture (.gif) or dicoms don't exist.
+                    for idx in range(len(central.select(scan_xnat_path).get())):
                         central.select(scan_xnat_path)[idx].get(bids_dir)
                         # Log the path where the file was downloaded for ground truth.
                         with open(os.path.join(bids_dir,'output.txt'), 'w+') as output_file:

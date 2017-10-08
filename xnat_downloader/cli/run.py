@@ -153,7 +153,7 @@ def parse_cmdline():
                                                   'compatible directory format')
     parser.add_argument('-c', '--config', help='login file (contains user/pass info)',
                         default=False)
-                        
+
     # Required arguments
     requiredargs = parser.add_argument_group('Required arguments')
     requiredargs.add_argument('-i', '--input_json',
@@ -196,7 +196,7 @@ def main():
 
     # log in to the xnat server
     if opts.config:
-        central = Interface(opts.config)
+        central = Interface(config=opts.config)
     else:
         central = Interface(server="https://rpacs.iibi.uiowa.edu/xnat", cachedir='/tmp')
 

@@ -148,9 +148,12 @@ def make_bids_dir(subject, sub_vars_dict, scan_type, ses_label, scan, BIDs_num_l
 def parse_cmdline():
     """Parse command line arguments."""
     import argparse
-    parser = argparse.ArgumentParser(description=('download_xnat.py downloads xnat '
+    parser = argparse.ArgumentParser(description='download_xnat.py downloads xnat '
                                                   'dicoms and saves them in BIDs '
-                                                  'compatible directory format'))
+                                                  'compatible directory format')
+    parser.add_argument('-c', '--config', help='login file (contains user/pass info)',
+                        default=False)
+                        
     # Required arguments
     requiredargs = parser.add_argument_group('Required arguments')
     requiredargs.add_argument('-i', '--input_json',
@@ -192,7 +195,10 @@ def main():
         BIDs_num_length = len(max([str(x) for x in list(subjects)], key=len))
 
     # log in to the xnat server
-    central = Interface(server="https://rpacs.iibi.uiowa.edu/xnat", cachedir='/tmp')
+    if opts.config:
+        central = Interface(opts.config)
+    else:
+        central = Interface(server="https://rpacs.iibi.uiowa.edu/xnat", cachedir='/tmp')
 
     logging.info('###################################')
 

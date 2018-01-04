@@ -129,7 +129,7 @@ def read_sub_csv(sub_csv):
 def make_bids_dir(subject, sub_vars_dict, scan_type, ses_label, scan, BIDs_num_length, dcm_dir):
     sub_num = str(subject).zfill(BIDs_num_length)
     if sub_vars_dict is not None:
-        sub_vars = "".join(sub_vars_dict[subject])
+        sub_vars = "".join(sub_vars_dict[str(subject)])
     else:
         sub_vars=''
 

@@ -162,12 +162,13 @@ def make_bids_dir(subject, sub_vars_dict, scan_type, ses_label, scan, BIDs_num_l
 def parse_cmdline():
     """Parse command line arguments."""
     import argparse
-    parser = argparse.ArgumentParser(description='download_xnat.py downloads xnat '
+    parser = argparse.ArgumentParser(description='xnat_downloader downloads xnat '
                                                  'dicoms and saves them in BIDs '
                                                  'compatible directory format')
     parser.add_argument('-c', '--config', help='login file (contains user/pass info)',
                         default=False)
-
+    parser.add_argument('-b', '--bids',
+                        help='Assume data are stored in a BIDS-ish format on xnat')
     # Required arguments
     requiredargs = parser.add_argument_group('Required arguments')
     requiredargs.add_argument('-i', '--input_json',

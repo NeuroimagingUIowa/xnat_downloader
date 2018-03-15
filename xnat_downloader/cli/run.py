@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 import zipfile
 
+
 def find_scans(ses_dict, scans, scan_dict):
     """
     purpose:
@@ -15,8 +16,12 @@ def find_scans(ses_dict, scans, scan_dict):
     # {'scan_desc1': ('id', 'label'), 'scan_desc2': ('id', 'label')}
     scan_list = ses_dict['xnat:scans']['xnat:scan']
     xnat_scans = {scan['xnat:series_description']: (scan['@ID']) for scan in scan_list}
-    wanted_scan_dict = {scan: type for scan, type in scan_dict.items() if scan_dict[scan][0] in scans}
-    download_dict = {scan: (type, xnat_scans[scan]) for scan, type in wanted_scan_dict.items() if scan in xnat_scans}
+    wanted_scan_dict = {scan: type
+                        for scan, type in scan_dict.items()
+                        if scan_dict[scan][0] in scans}
+    download_dict = {scan: (type, xnat_scans[scan])
+                     for scan, type in wanted_scan_dict.items()
+                     if scan in xnat_scans}
     missing_wanted_scans = list(set(wanted_scan_dict.keys()) - set(download_dict.keys()))
     if missing_wanted_scans:
         for scan in missing_wanted_scans:
@@ -45,7 +50,7 @@ def sort_sessions(sub_dict, ses_labels, sessions):
     ses_list = sub_dict['xnat:Subject']['xnat:experiments']['xnat:experiment']
     # print('check: {}'.format(str(type(ses_list))))
     if type(ses_list) is not list:
-        ses_list=[ses_list]
+        ses_list = [ses_list]
     if ses_labels is None:
         ses_labels = [None]
     # labels the techs give the scans
@@ -76,6 +81,7 @@ def sort_sessions(sub_dict, ses_labels, sessions):
     # print('session_info: {}'.format(session_info))
     return session_info
 
+
 def get_time(session):
     """
     purpose:
@@ -89,6 +95,7 @@ def get_time(session):
     time = session['xnat:time']
     xnat_time = datetime.strptime(date+' '+time, '%Y-%m-%d %H:%M:%S')
     return xnat_time
+
 
 def parse_json(json_file):
     """Parse json file."""
@@ -131,14 +138,21 @@ def make_bids_dir(subject, sub_vars_dict, scan_type, ses_label, scan, BIDs_num_l
     if sub_vars_dict is not None:
         sub_vars = "".join(sub_vars_dict[str(subject)])
     else:
-        sub_vars=''
+        sub_vars = ''
 
     # name of subject directory
     sub_label = sub_vars+sub_num
     if ses_label != 'dummy_session':
-        sub_dir = 'sub-{subject}/{session}/{scan_type}/sub-{subject}_ses-{session}_{scan}'.format(subject=sub_label, session=ses_label, scan_type=scan_type[0], scan=scan_type[1])
+        sub_dir = """sub-{subject}/{session}/{scan_type}/
+                     sub-{subject}_ses-{session}_{scan}""".format(subject=sub_label,
+                                                                  session=ses_label,
+                                                                  scan_type=scan_type[0],
+                                                                  scan=scan_type[1])
     else:
-        sub_dir = 'sub-{subject}/{scan_type}/sub-{subject}_{scan}'.format(subject=sub_label, scan_type=scan_type[0], scan=scan_type[1])
+        sub_dir = """sub-{subject}/{scan_type}/
+                     sub-{subject}_{scan}""".format(subject=sub_label,
+                                                    scan_type=scan_type[0],
+                                                    scan=scan_type[1])
 
     out_dir = os.path.join(dcm_dir, sub_dir)
 
@@ -149,8 +163,8 @@ def parse_cmdline():
     """Parse command line arguments."""
     import argparse
     parser = argparse.ArgumentParser(description='download_xnat.py downloads xnat '
-                                                  'dicoms and saves them in BIDs '
-                                                  'compatible directory format')
+                                                 'dicoms and saves them in BIDs '
+                                                 'compatible directory format')
     parser.add_argument('-c', '--config', help='login file (contains user/pass info)',
                         default=False)
 
@@ -181,7 +195,7 @@ def main():
     # optional entries
     sub_vars = input_dict.get('subject_variables_csv', False)
     BIDs_num_length = input_dict.get('zero_pad', False)
-    nii_dir = input_dict.get('nii_dir', False)  # not sure if this is needed
+    # nii_dir = input_dict.get('nii_dir', False)  # not sure if this is needed
 
     if session_labels == "None":
         session_labels = None
@@ -207,7 +221,8 @@ def main():
         subjects = [subject.label() for subject in proj_obj.subjects()]
 
     for subject in subjects:
-        sub_xnat_path = '/project/{project}/subjects/{subject}'.format(subject=subject, project=project)
+        sub_xnat_path = '/project/{project}/subjects/{subject}'.format(subject=subject,
+                                                                       project=project)
         sub_obj = central.select(sub_xnat_path)
         if not sub_obj.exists():
             logging.warning('subject {} does not exist, skipping...'.format(subject))
@@ -219,7 +234,7 @@ def main():
         sessions_info = sort_sessions(sub_dict, session_labels, sessions)
         for ses_info in sessions_info:
             ses_dict = ses_info[0]
-            ses_time = ses_info[1]
+            # ses_time = ses_info[1] # Never used
             ses_tech = ses_info[2]
 
             if session_labels is not None:
@@ -227,10 +242,10 @@ def main():
             else:
                 ses_label = 'dummy_session'
 
-            logging.info('\ttech label {tech} corresponds to session label {session}'.format(tech=ses_tech, session=ses_label))
+            logging.info("""\ttech label {tech} corresponds
+                         to session label {session}""".format(tech=ses_tech,
+                                                              session=ses_label))
             logging.info('\tStarting Scan Finding for session {}'.format(ses_label))
-            # sub_dict['xnat:Subject']['xnat:experiments']['xnat:experiment'][0]['xnat:scans']['xnat:scan'][0].keys()
-            # [u'@ID', u'@type', u'@UID', u'@xsi:type', u'xnat:image_session_ID', u'xnat:quality', u'xnat:series_description', u'xnat:scanner', u'xnat:frames', u'xnat:file', u'xnat:coil', u'xnat:fieldStrength', u'xnat:parameters']
             scans_info = find_scans(ses_dict, scans, find_scan_dict)
             for scan in scans_info:
                 # two element list ["func", "task-rest"]
@@ -238,26 +253,45 @@ def main():
                 # t
                 scan_id = scans_info[scan][1]
                 logging.info('\t\tStarting Download for scan {}.{}'.format(scan, scan_type))
-                scan_xnat_path = os.path.join(sub_xnat_path,'experiments/{label}/scans/{scan}/resources'.format(label=ses_tech, scan=scan_id))
+                scan_xnat_path = os.path.join(sub_xnat_path,
+                                              """experiments/
+                                                 {label}/
+                                                 scans/
+                                                 {scan}/
+                                                 resources""".format(label=ses_tech,
+                                                                     scan=scan_id))
                 # presume the first resource is the dicoms
-                bids_dir = make_bids_dir(subject, sub_vars_dict, scan_type, ses_label, scan, BIDs_num_length, dcm_dir)
+                bids_dir = make_bids_dir(subject,
+                                         sub_vars_dict,
+                                         scan_type,
+                                         ses_label,
+                                         scan,
+                                         BIDs_num_length,
+                                         dcm_dir)
+
                 if not os.path.exists(bids_dir):
                     os.makedirs(bids_dir)
 
                 if os.listdir(bids_dir):
                     logging.warn('\t\tDirectory not empty, skipping download')
                 else:
-                    print('Downloading {subject}:{session}:{scan}'.format(subject=subject,session=ses_label,scan=scan_type[0]))
+                    print('Downloading {subject}:{session}:{scan}'.format(subject=subject,
+                                                                          session=ses_label,
+                                                                          scan=scan_type[0]))
                     # download the gif and the dcms
                     # sometimes either the picture (.gif) or dicoms don't exist.
                     for idx in range(len(central.select(scan_xnat_path).get())):
                         central.select(scan_xnat_path)[idx].get(bids_dir)
                         # Log the path where the file was downloaded for ground truth.
-                        with open(os.path.join(bids_dir,'output.txt'), 'w+') as output_file:
+                        with open(os.path.join(bids_dir, 'output.txt'), 'w+') as output_file:
                             output_file.write('Data From:\n{}\n'.format(scan_xnat_path))
 
                         # unzip the downloaded file in the same directory
-                        zip_ref = zipfile.ZipFile(os.path.join(bids_dir, central.select(scan_xnat_path).get()[idx])+'.zip', 'r')
+                        zip_file_name = os.path.join(
+                            bids_dir,
+                            central.select(scan_xnat_path).get()[idx])+'.zip'
+
+                        zip_ref = zipfile.ZipFile(zip_file_name, 'r')
                         zip_ref.extractall(bids_dir)
                         zip_ref.close()
 

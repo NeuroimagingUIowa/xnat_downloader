@@ -2,21 +2,48 @@
 # -*- coding: utf-8 -*-
 from pyxnat import Interface
 import os
-import xmltodict
 import logging
 from datetime import datetime
-import zipfile
 
 
 def parse_json(json_file):
-    """Parse json file."""
+    """
+    Parse json file.
+
+    Parameters
+    ----------
+    json_file: json
+        JSON file containing information about which subjects/sessions/scans to
+        download from which project and where to store the files.
+
+    JSON Keys
+    ---------
+    destination:
+        Directory where the scan's zip files will be downloaded
+    project:
+        project ID on xnat that you wish to download from
+    zero_pad:
+        Explicitly set how many digits you want your subject label to have
+        (only useful for entirely numbered subject labels)
+    session_labels:
+        A list of session labels wished to be matched on
+        (e.g. [pre, post, active, passive])
+    subjects:
+        A list of subjects you wish to download scans from
+    scan_labels:
+        The scans you want to download
+
+    Returns
+    -------
+    input_dict:
+        A dictionary containing the parameters specified in the JSON file
+    """
     import json
     with open(json_file) as json_input:
         input_dict = json.load(json_input)
         # print(str(input_dict))
-    mandatory_keys = ['scan_dict', 'dcm_dir', 'sessions',
-                      'session_labels', 'project', 'subjects', 'scans']
-    optional_keys = ['subject_variables_csv', 'zero_pad', 'nii_dir']
+    mandatory_keys = ['destination', 'project']
+    optional_keys = ['zero_pad', 'session_labels', 'subjects', 'scan_labels']
     total_keys = mandatory_keys+optional_keys
     # print("total_keys: "+str(total_keys))
     # are there any inputs in the json_file that are not supported?
@@ -31,17 +58,6 @@ def parse_json(json_file):
                        '%s' % str(missing_inputs))
 
     return input_dict
-
-
-def read_sub_csv(sub_csv):
-    sub_dict = {}
-    with open(sub_csv) as sub_file:
-        for line in sub_file:
-            # mac os specific
-            sub_entry = line.strip('\n').split(',')
-            sub_dict[sub_entry[0]] = sub_entry[1:]
-
-    return sub_dict
 
 
 def parse_cmdline():
@@ -79,12 +95,16 @@ class Subject():
     ses_objs: list
         List of session objects returned from pyxnat assuming sub_obj was already set.
         (e.g. central.select('project').subject('label').experiments().get(''))
+    ses_dict: dictionary
+        Dictionary matching the session label with the session object pyxnat gives.
     ses: boolean
         True if the subject has sessions.
         False if the subject does not have any sessions
     scan_objs: list
         List of the available scans objects on xnat for a particular session
         (e.g. central.select('project').subject('label').experiment('session').scans.get(''))
+    scan_dict: dictionary
+        Dictionary matching a scan type (e.g. PU:T1w) with the scan object (from pyxnat)
     """
 
     def __init__(self, proj_obj, label):
@@ -105,10 +125,22 @@ class Subject():
         else:
             self.sub = True
 
-    def get_sessions(self):
+    def get_sessions(self, labels=None):
         """
         Retrieves the session objects for the subject
+
+        Parameters
+        ----------
+        labels: list | None
+            A list of session labels wished to be matched on.
+            (e.g. [pre, post, active, passive])
+
+        -- note: This assumes that session names follow the form
+                 sub-<label>_ses-<label>, and so the label paramter only represents
+                 the <label> after the 'ses-' key
         """
+        import re
+
         if not self.sub:
             print('ERROR: no sessions can be found because subject does not exist')
             return 1
@@ -120,28 +152,35 @@ class Subject():
         else:
             self.ses = True
             self.ses_dict = {}
-            for ses_obj in ses_objs:
-                key = ses_obj.attrs.get('label')
-                self.ses_dict[key] = ses_obj
+            for ses_obj in self.ses_objs:
+                # remove "sub-<label>_ses-" from the session label
+                key = re.sub(r"^sub-[a-zA-Z0-9]+_ses-", r"", ses_obj.attrs.get('label'))
+                # add the session object if we want all sessions or if it matches
+                # a string in the labels list.
+                if labels is None or key in labels:
+                    self.ses_dict[key] = ses_obj
 
-    def get_scans(self, ses_obj):
+    def get_scans(self, ses_label, scan_labels=None):
         """
         Retrieves the scan objects for a particular session
 
         Parameters
         ----------
-        ses_obj: object
-            session object returned from pyxnat
+        ses_label: string
+            session label you want to retrieve the scans from
+        scan_labels: list | None
+            the scans you want to download
         """
-        if not self.ses or ses_obj.attrs.get('label') not in self.ses_dict.keys():
-            print('ERROR: Session {ses} does not exist'.format(ses=ses_obj.attrs.get('label')))
+        if not self.ses or ses_label not in self.ses_dict.keys():
+            print('ERROR: Session {ses} does not exist'.format(ses=ses_label))
             return 1
 
-        self.scan_objs = list(ses_obj.scans().get(''))
+        self.scan_objs = list(self.ses_dict[ses_label].scans().get(''))
         self.scan_dict = {}
-        for scan_obj in scan_objs:
+        for scan_obj in self.scan_objs:
             key = scan_obj.attrs.get('type')
-            self.scan_dict[key] = scan_obj
+            if scan_labels is None or key in scan_labels:
+                self.scan_dict[key] = scan_obj
 
     def download_scan(self, scan, dest):
         """
@@ -158,16 +197,16 @@ class Subject():
             <session_label>/scans/<scan_label>/resources/DICOM/files
         """
         from glob import glob
-        if scan not in scan_dict.keys():
+        if scan not in self.scan_dict.keys():
             print('{scan} is not available for download'.format(scan=scan))
             return 1
 
         # No easy way to check for complete download
         # the session label (e.g. 20180613)
         # ^soon to be sub-01_ses-01
-        ses_dir = scan_dict[scan].parent().label()
+        ses_dir = self.scan_dict[scan].parent().label()
         # the number id given to a scan (1, 2, 3, 400, 500)
-        scan_id = scan_dict[scan].id()
+        scan_id = self.scan_dict[scan].id()
         # PU:task-rest_bold -> PU_task_rest_bold
         scan_dir = scan_id + '-' + scan.replace('-', '_').replace(':', '_')
         potential_files = glob(os.path.join(dest,
@@ -181,13 +220,17 @@ class Subject():
                   """.format(potential_files[0])
             print(msg)
         else:
-            scan_dict[scan].download(dest_dir=dest,
-                                     type=scan,
-                                     extract=True,
-                                     removeZip=True)
+            self.scan_dict[scan].download(dest_dir=dest,
+                                          type=scan,
+                                          extract=True,
+                                          removeZip=True)
 
 
 def main():
+    """
+    Does the main work of calling the functions and class(es) defined to download
+    subject dicoms.
+    """
     # Start a log file
     logging.basicConfig(filename='xnat_downloader.log', level=logging.DEBUG)
     # Parse the command line options
@@ -196,27 +239,17 @@ def main():
     input_dict = parse_json(opts.input_json)
     # assign variables from the json_file
     project = input_dict['project']
-    subjects = input_dict.get('subjects', 'ALL')
+    subjects = input_dict.get('subjects', None)
     session_labels = input_dict.get('session_labels', None)
-    sessions = input_dict.get('sessions', 'ALL')
-    scans = input_dict.get('scans', 'ALL')
-
-    # find_scan_dict = input_dict['scan_dict']
-    # dcm_dir = input_dict['dcm_dir']
-    # optional entries
-    sub_vars = input_dict.get('subject_variables_csv', False)
+    scan_labels = input_dict.get('scan_labels', None)
     BIDs_num_length = input_dict.get('zero_pad', False)
+    dest = input_dict.get('destination', None)
     # nii_dir = input_dict.get('nii_dir', False)  # not sure if this is needed
 
     if session_labels == "None":
         session_labels = None
-    # make the BIDs subject dictionary
-    if sub_vars and os.path.isfile(sub_vars):
-        sub_vars_dict = read_sub_csv(sub_vars)
-    else:
-        sub_vars_dict = None
 
-    if not BIDs_num_length and not subjects == "ALL":
+    if not BIDs_num_length and subjects is not None:
         BIDs_num_length = len(max([str(x) for x in list(subjects)], key=len))
 
     # log in to the xnat server
@@ -229,8 +262,10 @@ def main():
 
     proj_obj = central.select.project(project)
 
-    if subjects == "ALL":
+    if subjects is None:
         sub_objs = proj_obj.subjects()
+        # list the subjects by their label (e.g. sub-myname)
+        # instead of the RPACS_1223 ID given to them
         sub_objs._id_header = 'label'
         subjects = sub_objs.get()
 
@@ -238,6 +273,16 @@ def main():
     subject_dict = {}
     for subject in subjects:
         subject_dict[subject] = Subject(proj_obj, subject)
+        sub_class = subject_dict[subject]
+        # get the session objects
+        sub_class.get_sessions(session_labels)
+        # for every session
+        for session in sub_class.ses_dict.keys():
+            sub_class.get_scans(session, scan_labels)
+            # for each available scan
+            for scan in sub_class.scan_dict.keys():
+                # download the scan
+                sub_class.download_scan(scan, dest)
 
 
 if __name__ == "__main__":

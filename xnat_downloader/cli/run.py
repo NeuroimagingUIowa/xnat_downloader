@@ -3,7 +3,7 @@
 from pyxnat import Interface
 import os
 import logging
-from datetime import datetime
+
 
 
 def parse_json(json_file):

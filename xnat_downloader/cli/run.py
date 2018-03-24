@@ -5,7 +5,6 @@ import os
 import logging
 
 
-
 def parse_json(json_file):
     """
     Parse json file.
@@ -71,15 +70,15 @@ def parse_cmdline():
     parser.add_argument('-b', '--bids',
                         help='Assume data are stored in a BIDS-ish format on xnat')
     # Required arguments
-    requiredargs = parser.add_argument_group('Required arguments')
-    requiredargs.add_argument('-i', '--input_json',
+    required_args = parser.add_argument_group('Required arguments')
+    required_args.add_argument('-i', '--input_json',
                               dest='input_json', required=True,
                               help='json file defining inputs for this script.')
 
     return parser
 
 
-class Subject():
+class Subject:
     """
     Main way to interact with subject data.
     This class represents a single subject's data under a particular project.
@@ -124,6 +123,12 @@ class Subject():
             self.sub = False
         else:
             self.sub = True
+        # initialize other attributes
+        self.ses = False
+        self.ses_dict = None
+        self.ses_objs = None
+        self.scan_dict = None
+        self.scan_objs = None
 
     def get_sessions(self, labels=None):
         """
@@ -242,15 +247,15 @@ def main():
     subjects = input_dict.get('subjects', None)
     session_labels = input_dict.get('session_labels', None)
     scan_labels = input_dict.get('scan_labels', None)
-    BIDs_num_length = input_dict.get('zero_pad', False)
+    bids_num_len = input_dict.get('zero_pad', False)
     dest = input_dict.get('destination', None)
     # nii_dir = input_dict.get('nii_dir', False)  # not sure if this is needed
 
     if session_labels == "None":
         session_labels = None
 
-    if not BIDs_num_length and subjects is not None:
-        BIDs_num_length = len(max([str(x) for x in list(subjects)], key=len))
+    if not bids_num_len and subjects is not None:
+        bids_num_len = len(max([str(x) for x in list(subjects)], key=len))
 
     # log in to the xnat server
     if opts.config:

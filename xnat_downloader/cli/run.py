@@ -3,6 +3,8 @@
 from pyxnat import Interface
 import os
 import logging
+import re
+from subprocess import call
 
 
 def parse_json(json_file):
@@ -18,7 +20,7 @@ def parse_json(json_file):
     JSON Keys
     ---------
     destination:
-        Directory where the scan's zip files will be downloaded
+        Directory to construct the BIDS structure
     project:
         project ID on xnat that you wish to download from
     zero_pad:
@@ -72,8 +74,8 @@ def parse_cmdline():
     # Required arguments
     required_args = parser.add_argument_group('Required arguments')
     required_args.add_argument('-i', '--input_json',
-                              dest='input_json', required=True,
-                              help='json file defining inputs for this script.')
+                               dest='input_json',
+                               help='json file defining inputs for this script.')
 
     return parser
 
@@ -141,7 +143,7 @@ class Subject:
             (e.g. [pre, post, active, passive])
 
         -- note: This assumes that session names follow the form
-                 sub-<label>_ses-<label>, and so the label paramter only represents
+                 sub-<label>_ses-<label>, and so the label parameter only represents
                  the <label> after the 'ses-' key
         """
         import re
@@ -194,7 +196,7 @@ class Subject:
         Parameters
         ----------
 
-        scan: object
+        scan: string
             Scan object returned from pyxnat.
         dest: string
             Directory where the zip file will be saved.
@@ -210,11 +212,21 @@ class Subject:
         # the session label (e.g. 20180613)
         # ^soon to be sub-01_ses-01
         ses_dir = self.scan_dict[scan].parent().label()
+        scan_par = self.scan_dict[scan].parent()
         # the number id given to a scan (1, 2, 3, 400, 500)
         scan_id = self.scan_dict[scan].id()
+        if scan_id == '1' or scan_id == '2':
+            print('scan is a localizer or setup scan')
+            return 0
+
         # PU:task-rest_bold -> PU_task_rest_bold
         scan_dir = scan_id + '-' + scan.replace('-', '_').replace(':', '_')
-        potential_files = glob(os.path.join(dest,
+
+        dcm_outdir = os.path.join(dest, 'sourcedata')
+        if not os.path.isdir(dcm_outdir):
+            os.makedirs(dcm_outdir)
+
+        potential_files = glob(os.path.join(dcm_outdir,
                                             ses_dir,
                                             'scans',
                                             scan_dir,
@@ -225,10 +237,55 @@ class Subject:
                   """.format(potential_files[0])
             print(msg)
         else:
-            self.scan_dict[scan].download(dest_dir=dest,
-                                          type=scan,
-                                          extract=True,
-                                          removeZip=True)
+            scan_par.scans().download(dest_dir=dcm_outdir,
+                                      type=scan,
+                                      extract=True,
+                                      removeZip=True)
+
+        # getting information about the directories
+        dcm_dir = os.path.join(dcm_outdir,
+                               ses_dir,
+                               'scans',
+                               scan_dir)
+
+        sub_ses_pattern = re.compile(r'(sub-[A-Za-z0-9]+)_?(ses-[A-Za-z0-9]+)?')
+        sub_name, ses_name = re.search(sub_ses_pattern, ses_dir).groups()
+
+        scan_pattern = re.compile(r'(PU:)?([a-z]+)(-[a-zA-Z0-9]+)?(_[a-zA-Z0-9_\-]+$)?')
+
+        rec, scan_dir, scan_labelr, scan_info = re.search(scan_pattern, scan).groups()
+
+        # build up the bids directory
+        bids_dir = os.path.join(dest, sub_name, ses_name, scan_dir)
+
+        if not os.path.isdir(bids_dir):
+            os.makedirs(bids_dir)
+
+        # name the bids file
+        fname = '_'.join([sub_name, ses_name])
+
+        if rec is not None:
+            fname = '_'.join([fname, 'rec-pu'])
+
+        if scan_info is not None:
+            scan_info = scan_info.lstrip('_')
+            fname = '_'.join([fname, scan_info])
+
+        if scan_labelr is not None:
+            scan_label = scan_labelr.lstrip('-')
+        else:
+            scan_label = scan_dir
+
+        fname = '_'.join([fname, scan_label])
+
+        dcm2niix = 'dcm2niix -o {bids_dir} -f {fname} -z y -b y {dcm_dir}'.format(bids_dir=bids_dir,
+                                                                                  fname=fname,
+                                                                                  dcm_dir=dcm_dir)
+        if scan_dir is not None:
+            call(dcm2niix, shell=True)
+        else:
+            "scan: {scan} doesn't appear to be a BIDS-named scan".format(scan=scan)
+
 
 
 def main():
@@ -266,7 +323,6 @@ def main():
     logging.info('###################################')
 
     proj_obj = central.select.project(project)
-
     if subjects is None:
         sub_objs = proj_obj.subjects()
         # list the subjects by their label (e.g. sub-myname)

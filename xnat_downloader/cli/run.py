@@ -281,11 +281,11 @@ class Subject:
         dcm2niix = 'dcm2niix -o {bids_dir} -f {fname} -z y -b y {dcm_dir}'.format(bids_dir=bids_dir,
                                                                                   fname=fname,
                                                                                   dcm_dir=dcm_dir)
-        if scan_dir is not None:
+        bids_outfile = os.path.join(bids_dir, fname)
+        if not os.path.exists(bids_outfile):
             call(dcm2niix, shell=True)
         else:
-            "scan: {scan} doesn't appear to be a BIDS-named scan".format(scan=scan)
-
+            print('It appears the nifti file already exists for {scan}'.format(scan=scan))
 
 
 def main():

@@ -16,7 +16,7 @@ The json file specifies what you want to download from xnat as well as where you
 
 - project: the project name as it appears on xnat
 
-- subjects: (optional)a list ([]) that specifies which subjects you want to download (e.g. [1, 4, 60])
+- subjects: (optional) a list ([]) that specifies which subjects you want to download (e.g. [1, 4, 60])
 
 - scans: (optional) The list of scan types you want to download (e.g. ["anat","func","fmap","dwi"]
 

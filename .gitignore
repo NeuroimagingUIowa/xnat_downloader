@@ -33,3 +33,7 @@ cmake-build-release/
 
 ## File-based project format:
 *.iws
+
+.idea
+
+.ipynb_checkpoints

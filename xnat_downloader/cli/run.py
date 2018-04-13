@@ -264,12 +264,12 @@ class Subject:
         # name the bids file
         fname = '_'.join([sub_name, ses_name])
 
-        if rec is not None:
-            fname = '_'.join([fname, 'rec-pu'])
-
         if scan_info is not None:
             scan_info = scan_info.lstrip('_')
             fname = '_'.join([fname, scan_info])
+
+        if rec is not None:
+            fname = '_'.join([fname, 'rec-pu'])
 
         if scan_labelr is not None:
             scan_label = scan_labelr.lstrip('-')

@@ -1,0 +1,36 @@
+# python cache
+__pycache__/**/*
+__pycache__
+*.pyc
+
+# python distribution
+build/**/*
+build
+dist/**/*
+dist
+xnat_download.egg-info/**/*
+xnat_download.egg-info
+.eggs/**/*
+.eggs
+
+# pip installs
+src/**/*
+src/
+
+# git
+.gitignore
+.git/**/*
+.git
+
+# other
+work/**/*
+work
+out/**/*
+out/
+
+# CI, etc.
+.circleci
+.circleci/**/*
+.zenodo.json
+.travis.yml
+.readthedocs.yml

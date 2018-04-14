@@ -280,7 +280,7 @@ class Subject:
         dcm2niix = 'dcm2niix -o {bids_dir} -f {fname} -z y -b y {dcm_dir}'.format(bids_dir=bids_dir,
                                                                                   fname=fname,
                                                                                   dcm_dir=dcm_dir)
-        bids_outfile = os.path.join(bids_dir, fname)
+        bids_outfile = os.path.join(bids_dir, fname + '.nii.gz')
         if not os.path.exists(bids_outfile):
             call(dcm2niix, shell=True)
         else:

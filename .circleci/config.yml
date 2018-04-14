@@ -27,4 +27,4 @@ jobs:
             docker run -ti --rm \
             hbclab/xnat_downloader:latest \
             -i /opt/xnatDownloader/TEST.json \
-            -c /opt/xnatDownloader/config.cfg
+            -c /opt/xnatDownloader/central.cfg

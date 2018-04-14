@@ -1,4 +1,5 @@
 # xnat_downloader
+[![CircleCI](https://circleci.com/gh/HBClab/xnat_downloader.svg?style=svg)](https://circleci.com/gh/HBClab/xnat_downloader)
 
 ## Install (within the github directory)
 

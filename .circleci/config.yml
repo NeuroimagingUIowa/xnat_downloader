@@ -21,8 +21,8 @@ jobs:
           command: |
             docker run -ti --rm \
             hbclab/xnat_downloader:latest --help
-     - run:
-         name: Test Docker image
-         command: |
-           docker run -ti --rm \
-           hbclab/xnat_downloader:latest -i TEST.json -c config.cfg
+      - run:
+          name: Test Docker image
+          command: |
+            docker run -ti --rm \
+            hbclab/xnat_downloader:latest -i TEST.json -c config.cfg

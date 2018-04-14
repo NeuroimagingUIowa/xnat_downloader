@@ -1,0 +1,23 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: docker:18.01.0-ce-git
+    working_directory: /tmp/src/xnat_downloader
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker image
+          no_output_timout: 60m
+          command: |
+            docker build \
+            -t hbclab/xnat_downloader:latest \
+            --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+            --build-arg VCS_REF=`git rev-parse --short HEAD` \
+            --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" .
+      - run:
+          name: Execute Docker image
+          command: |
+            docker run -ti --rm \
+            hbclab/xnat_downloader:latest --help

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 from pyxnat import Interface
 import os
 import logging
@@ -43,7 +42,7 @@ def parse_json(json_file):
     with open(json_file) as json_input:
         input_dict = json.load(json_input)
         # print(str(input_dict))
-    mandatory_keys = ['destination', 'project']
+    mandatory_keys = ['destination', 'project', 'server']
     optional_keys = ['zero_pad', 'session_labels', 'subjects', 'scan_labels']
     total_keys = mandatory_keys+optional_keys
     # print("total_keys: "+str(total_keys))
@@ -304,6 +303,7 @@ def main():
     subjects = input_dict.get('subjects', None)
     session_labels = input_dict.get('session_labels', None)
     scan_labels = input_dict.get('scan_labels', None)
+    server = input_dict.get('server', None)
     bids_num_len = input_dict.get('zero_pad', False)
     dest = input_dict.get('destination', None)
     # nii_dir = input_dict.get('nii_dir', False)  # not sure if this is needed
@@ -318,11 +318,17 @@ def main():
     if opts.config:
         central = Interface(config=opts.config)
     else:
-        central = Interface(server="https://rpacs.iibi.uiowa.edu/xnat", cachedir='/tmp')
+        if server is not None:
+            print(server)
+            central = Interface(server=server)
+        else:
+            print('Server not specified')
+            return 1
 
     logging.info('###################################')
-
+    print(project)
     proj_obj = central.select.project(project)
+    print(proj_obj.exists())
     if subjects is None:
         sub_objs = proj_obj.subjects()
         # list the subjects by their label (e.g. sub-myname)

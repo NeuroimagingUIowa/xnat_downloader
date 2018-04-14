@@ -326,9 +326,7 @@ def main():
             return 1
 
     logging.info('###################################')
-    print(project)
     proj_obj = central.select.project(project)
-    print(proj_obj.exists())
     if subjects is None:
         sub_objs = proj_obj.subjects()
         # list the subjects by their label (e.g. sub-myname)

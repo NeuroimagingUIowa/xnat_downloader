@@ -24,7 +24,9 @@ jobs:
       - run:
           name: Test Docker image
           command: |
+            mkdir -p /tmp/xnat/bids
             docker run -ti --rm \
+            -v /tmp/xnat/bids:/out
             hbclab/xnat_downloader:latest \
-            -i /opt/xnatDownloader/TEST.json \
-            -c /opt/xnatDownloader/central.cfg
+            -i /opt/xnatDownloader/.circleci/TEST.json \
+            -c /opt/xnatDownloader/.circleci/central.cfg

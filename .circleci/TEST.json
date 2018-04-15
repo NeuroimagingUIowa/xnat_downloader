@@ -1,5 +1,5 @@
 {
-  "destination": "/home/james/BIDS",
+  "destination": "/out",
   "project": "xnatDownload",
   "server": "https://central.xnat.org"
 }

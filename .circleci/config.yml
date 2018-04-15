@@ -27,7 +27,6 @@ jobs:
             mkdir -p /tmp/xnat/bids
             docker run -ti --rm \
             -v /tmp/xnat/bids:/out \
-            -v /tmp/src/xnat_downloader/.circleci:/inputs \
             hbclab/xnat_downloader:latest \
-            -i /inputs/TEST.json \
-            -c /inputs/central.cfg
+            -i /opt/xnatDownloader/tests/circleci_test.json \
+            -c /opt/xnatDownloader/tests/central.cfg

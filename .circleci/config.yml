@@ -40,3 +40,4 @@ jobs:
             mkdir -p /tmp/test
             find /tmp/xnat/bids/out -type f | sed s+/tmp/xnat/bids/out/++ | sort > /tmp/test/extend.out
             diff /tmp/src/xnat_downloader/.circleci/extend.txt /tmp/test/extend.out
+            exit $?

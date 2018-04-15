@@ -30,3 +30,6 @@ jobs:
             hbclab/xnat_downloader:latest \
             -i /opt/xnatDownloader/tests/circleci_test.json \
             -c /opt/xnatDownloader/tests/central.cfg
+
+      - store_artifacts:
+          path: /tmp/xnat/bids

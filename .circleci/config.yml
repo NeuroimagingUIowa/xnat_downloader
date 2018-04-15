@@ -22,11 +22,21 @@ jobs:
             docker run -ti --rm \
             hbclab/xnat_downloader:latest --help
       - run:
-          name: Test Docker image
+          name: Run Docker image on test data
           command: |
-            mkdir -p /tmp/xnat/bids
             docker run -ti --rm=false --name xnat_app \
             hbclab/xnat_downloader:latest \
             -i /opt/xnatDownloader/tests/circleci_test.json \
             -c /opt/xnatDownloader/tests/central.cfg
+      - run:
+          name: Check for output
+          command: |
+            mkdir -p /tmp/xnat/bids
             docker cp xnat_app:/out /tmp/xnat/bids
+
+      - run:
+          name: Validate output
+          command: |
+            mkdir -p /tmp/test
+            find /tmp/xnat/bids/out -type f | sed s+/tmp/xnat/bids/out/++ | sort > /tmp/test/extend.out
+            diff /tmp/src/xnat_downloader/.circleci/extend.txt /tmp/test/extend.out

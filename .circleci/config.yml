@@ -25,11 +25,8 @@ jobs:
           name: Test Docker image
           command: |
             mkdir -p /tmp/xnat/bids
-            docker run -ti --rm \
-            -v /tmp/xnat/bids:/out \
+            docker run -ti --rm=false \
             hbclab/xnat_downloader:latest \
             -i /opt/xnatDownloader/tests/circleci_test.json \
             -c /opt/xnatDownloader/tests/central.cfg
-
-      - store_artifacts:
-          path: /tmp/xnat/bids
+            docker cp /out /tmp/xnat/bids

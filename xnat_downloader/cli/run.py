@@ -282,9 +282,12 @@ class Subject:
 
         for key in bids_keys_order:
             label = scan_pattern_dict[key]
-            if key == 'rec' and label is not None:
-                scan_pattern_dict['rec'] = 'pu'
-            fname = '_'.join(fname, key + '-' + label)
+            if label is not None:
+                if key == 'rec':
+                    scan_pattern_dict['rec'] = 'pu'
+                fname = '_'.join(fname, key + '-' + label)
+
+        # add the label (e.g. _bold)
         fname = '_'.join(fname, scan_pattern_dict['label'])
 
         dcm2niix = 'dcm2niix -o {bids_dir} -f {fname} -z y -b y {dcm_dir}'.format(

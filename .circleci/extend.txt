@@ -30,7 +30,7 @@ sub-001/ses-01/func/sub-001_ses-01_task-breathhold_bold.json
 sub-001/ses-01/func/sub-001_ses-01_task-breathhold_bold.nii.gz
 sub-001/ses-01/func/sub-001_ses-01_task-breathhold_rec-pu_bold.json
 sub-001/ses-01/func/sub-001_ses-01_task-breathhold_rec-pu_bold.nii.gz
+sub-001/ses-01/func/sub-001_ses-01_task-rest_rec-pu_run-01_bold.json
+sub-001/ses-01/func/sub-001_ses-01_task-rest_rec-pu_run-01_bold.nii.gz
 sub-001/ses-01/func/sub-001_ses-01_task-rest_run-01_bold.json
 sub-001/ses-01/func/sub-001_ses-01_task-rest_run-01_bold.nii.gz
-sub-001/ses-01/func/sub-001_ses-01_task-rest_run-01_rec-pu_bold.json
-sub-001/ses-01/func/sub-001_ses-01_task-rest_run-01_rec-pu_bold.nii.gz

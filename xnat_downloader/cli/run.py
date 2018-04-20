@@ -6,6 +6,19 @@ import re
 from subprocess import call
 
 
+SCAN_EXPR = """\
+^(?P<rec>PU:)?\
+(?P<modality>[a-z]+)?\
+(-(?P<label>[a-zA-Z0-9]+))?\
+(_task-(?P<task>[a-zA-Z0-9]+))?\
+(_acq-(?P<acq>[a-zA-Z0-9]+))?\
+(_ce-(?P<ce>[a-zA-Z0-9]+))?\
+(_dir-(?P<dir>[a-zA-Z0-9]+))?\
+(_run-(?P<run>[a-zA-Z0-9]+))?\
+(_echo-(?P<echo>[0-9]+))?\
+"""
+
+
 def parse_json(json_file):
     """
     Parse json file.
@@ -250,12 +263,14 @@ class Subject:
         sub_ses_pattern = re.compile(r'(sub-[A-Za-z0-9]+)_?(ses-[A-Za-z0-9]+)?')
         sub_name, ses_name = re.search(sub_ses_pattern, ses_dir).groups()
 
-        scan_pattern = re.compile(r'(PU:)?([a-z]+)(-[a-zA-Z0-9]+)?(_[a-zA-Z0-9_\-]+$)?')
+        scan_pattern = re.compile(SCAN_EXPR)
 
-        rec, scan_dir, scan_labelr, scan_info = re.search(scan_pattern, scan).groups()
+        # WARNING they will only be in the correct order if I am using
+        # python3.6+
+        scan_pattern_dict = re.search(scan_pattern, scan).groupdict()
 
         # build up the bids directory
-        bids_dir = os.path.join(dest, sub_name, ses_name, scan_dir)
+        bids_dir = os.path.join(dest, sub_name, ses_name, scan_pattern_dict['modality'])
 
         if not os.path.isdir(bids_dir):
             os.makedirs(bids_dir)
@@ -263,23 +278,27 @@ class Subject:
         # name the bids file
         fname = '_'.join([sub_name, ses_name])
 
-        if scan_info is not None:
-            scan_info = scan_info.lstrip('_')
-            fname = '_'.join([fname, scan_info])
+        bids_keys_order = ['task', 'acq', 'ce', 'rec', 'dir', 'run', 'echo']
 
-        if rec is not None:
-            fname = '_'.join([fname, 'rec-pu'])
+        for key in bids_keys_order:
+            label = scan_pattern_dict[key]
+            if label is not None:
+                if key == 'rec':
+                    label = 'pu'
+                fname = '_'.join([fname, key + '-' + label])
 
-        if scan_labelr is not None:
-            scan_label = scan_labelr.lstrip('-')
+        # add the label (e.g. _bold)
+        if scan_pattern_dict['label'] is None:
+            label = scan_pattern_dict['modality']
         else:
-            scan_label = scan_dir
+            label = scan_pattern_dict['label']
 
-        fname = '_'.join([fname, scan_label])
+        fname = '_'.join([fname, label])
 
-        dcm2niix = 'dcm2niix -o {bids_dir} -f {fname} -z y -b y {dcm_dir}'.format(bids_dir=bids_dir,
-                                                                                  fname=fname,
-                                                                                  dcm_dir=dcm_dir)
+        dcm2niix = 'dcm2niix -o {bids_dir} -f {fname} -z y -b y {dcm_dir}'.format(
+            bids_dir=bids_dir,
+            fname=fname,
+            dcm_dir=dcm_dir)
         bids_outfile = os.path.join(bids_dir, fname + '.nii.gz')
         if not os.path.exists(bids_outfile):
             call(dcm2niix, shell=True)

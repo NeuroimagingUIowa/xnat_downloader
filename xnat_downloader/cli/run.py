@@ -284,7 +284,7 @@ class Subject:
             label = scan_pattern_dict[key]
             if label is not None:
                 if key == 'rec':
-                    scan_pattern_dict['rec'] = 'pu'
+                    label = 'pu'
                 fname = '_'.join([fname, key + '-' + label])
 
         # add the label (e.g. _bold)

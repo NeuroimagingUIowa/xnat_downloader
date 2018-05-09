@@ -7,12 +7,13 @@ from subprocess import call
 
 
 SCAN_EXPR = """\
-^(?P<rec>PU:)?\
+^(?P<rec_ex>PU:)?\
 (?P<modality>[a-z]+)?\
 (-(?P<label>[a-zA-Z0-9]+))?\
 (_task-(?P<task>[a-zA-Z0-9]+))?\
 (_acq-(?P<acq>[a-zA-Z0-9]+))?\
 (_ce-(?P<ce>[a-zA-Z0-9]+))?\
+(_rec-(?P<rec>[a-zA-Z0-9]+))?\
 (_dir-(?P<dir>[a-zA-Z0-9]+))?\
 (_run-(?P<run>[a-zA-Z0-9]+))?\
 (_echo-(?P<echo>[0-9]+))?\
@@ -56,7 +57,8 @@ def parse_json(json_file):
         input_dict = json.load(json_input)
         # print(str(input_dict))
     mandatory_keys = ['destination', 'project', 'server']
-    optional_keys = ['zero_pad', 'session_labels', 'subjects', 'scan_labels']
+    optional_keys = ['zero_pad', 'session_labels', 'subjects', 'scan_labels',
+                     'scan_dict']
     total_keys = mandatory_keys+optional_keys
     # print("total_keys: "+str(total_keys))
     # are there any inputs in the json_file that are not supported?
@@ -173,6 +175,7 @@ class Subject:
             self.ses_dict = {}
             for ses_obj in self.ses_objs:
                 # remove "sub-<label>_ses-" from the session label
+                # this will not change a session label like 20180506
                 key = re.sub(r"^sub-[a-zA-Z0-9]+_ses-", r"", ses_obj.attrs.get('label'))
                 # add the session object if we want all sessions or if it matches
                 # a string in the labels list.
@@ -200,6 +203,112 @@ class Subject:
             key = scan_obj.attrs.get('type')
             if scan_labels is None or key in scan_labels:
                 self.scan_dict[key] = scan_obj
+
+    def download_scan_unformatted(self, scan, dest, scan_repl_dict, bids_num_len):
+        """
+        Downloads a particular scan session
+
+        Parameters
+        ----------
+
+        scan: string
+            Scan object returned from pyxnat.
+        dest: string
+            Directory where the zip file will be saved.
+            The actual dicoms will be saved under the general scheme
+            <session_label>/scans/<scan_label>/resources/DICOM/files
+        scan_dict: dictionary
+            Dictionary containing terms to match the scan name on xnat with
+            the reproin name of the scan
+        """
+        from glob import glob
+        if scan not in self.scan_dict.keys():
+            print('{scan} is not available for download'.format(scan=scan))
+            return 1
+
+        # No easy way to check for complete download
+        # the session label (e.g. 20180613)
+        # ^soon to be sub-01_ses-01
+        ses_dir = self.scan_dict[scan].parent().label()
+        scan_par = self.scan_dict[scan].parent()
+        # the number id given to a scan (1, 2, 3, 400, 500)
+        scan_id = self.scan_dict[scan].id()
+        # TODO: change this hardcoding
+        if scan_id == '1' or scan_id == '2':
+            print('scan is a localizer or setup scan')
+            return 0
+        bids_scan = scan_repl_dict[scan]
+        # PU:task-rest_bold -> PU_task_rest_bold
+        # TODO: make this a regular expression
+        scan_dir = scan_id + '-' + scan.replace('-', '_').replace(':', '_').replace(' ', '_').replace('(', '_').replace(')', '_')
+
+        dcm_outdir = os.path.join(dest, 'sourcedata')
+        if not os.path.isdir(dcm_outdir):
+            os.makedirs(dcm_outdir)
+
+        potential_files = glob(os.path.join(dcm_outdir,
+                                            ses_dir,
+                                            'scans',
+                                            scan_dir,
+                                            'resources/DICOM/files/*.dcm'))
+        if potential_files:
+            msg = """
+                  dicoms were already found in the output directory: {}
+                  """.format(potential_files[0])
+            print(msg)
+        else:
+            scan_par.scans().download(dest_dir=dcm_outdir,
+                                      type=scan,
+                                      extract=True,
+                                      removeZip=True)
+
+        # getting information about the directories
+        dcm_dir = os.path.join(dcm_outdir,
+                               ses_dir,
+                               'scans',
+                               scan_dir)
+
+        sub_name = 'sub-' + self.sub_obj.attrs.get('label').zfill(bids_num_len)
+        ses_name = 'ses-' + ses_dir.replace('_', 's')
+        scan_pattern = re.compile(SCAN_EXPR)
+
+        scan_pattern_dict = re.search(scan_pattern, bids_scan).groupdict()
+
+        # build up the bids directory
+        bids_dir = os.path.join(dest, sub_name, ses_name, scan_pattern_dict['modality'])
+
+        if not os.path.isdir(bids_dir):
+            os.makedirs(bids_dir)
+
+        # name the bids file
+        fname = '_'.join([sub_name, ses_name])
+
+        bids_keys_order = ['task', 'acq', 'ce', 'rec', 'rec_ex', 'dir', 'run', 'echo']
+
+        for key in bids_keys_order:
+            label = scan_pattern_dict[key]
+            if label is not None:
+                if key == 'rec_ex':
+                    label = 'pu'
+                fname = '_'.join([fname, key + '-' + label])
+
+        # add the label (e.g. _bold)
+        if scan_pattern_dict['label'] is None:
+            label = scan_pattern_dict['modality']
+        else:
+            label = scan_pattern_dict['label']
+
+        fname = '_'.join([fname, label])
+
+        dcm2niix = 'dcm2niix -o {bids_dir} -f {fname} -z y -b y {dcm_dir}'.format(
+            bids_dir=bids_dir,
+            fname=fname,
+            dcm_dir=dcm_dir)
+        bids_outfile = os.path.join(bids_dir, fname + '.nii.gz')
+        if not os.path.exists(bids_outfile):
+            call(dcm2niix, shell=True)
+        else:
+            print('It appears the nifti file already exists for {scan}'.format(scan=scan))
 
     def download_scan(self, scan, dest):
         """
@@ -232,7 +341,7 @@ class Subject:
             return 0
 
         # PU:task-rest_bold -> PU_task_rest_bold
-        scan_dir = scan_id + '-' + scan.replace('-', '_').replace(':', '_')
+        scan_dir = scan_id + '-' + scan.replace('-', '_').replace(':', '_').replace(' ', '_')
 
         dcm_outdir = os.path.join(dest, 'sourcedata')
         if not os.path.isdir(dcm_outdir):
@@ -278,12 +387,12 @@ class Subject:
         # name the bids file
         fname = '_'.join([sub_name, ses_name])
 
-        bids_keys_order = ['task', 'acq', 'ce', 'rec', 'dir', 'run', 'echo']
+        bids_keys_order = ['task', 'acq', 'ce', 'rec', 'rec_ex', 'dir', 'run', 'echo']
 
         for key in bids_keys_order:
             label = scan_pattern_dict[key]
             if label is not None:
-                if key == 'rec':
+                if key == 'rec_ex':
                     label = 'pu'
                 fname = '_'.join([fname, key + '-' + label])
 
@@ -309,7 +418,7 @@ class Subject:
 def main():
     """
     Does the main work of calling the functions and class(es) defined to download
-    subject dicoms.
+    subject dicoms and transfer them to niftis
     """
     # Start a log file
     logging.basicConfig(filename='xnat_downloader.log', level=logging.DEBUG)
@@ -325,6 +434,7 @@ def main():
     server = input_dict.get('server', None)
     bids_num_len = input_dict.get('zero_pad', False)
     dest = input_dict.get('destination', None)
+    scan_repl_dict = input_dict.get('scan_dict', None)
     # nii_dir = input_dict.get('nii_dir', False)  # not sure if this is needed
 
     if session_labels == "None":
@@ -338,7 +448,6 @@ def main():
         central = Interface(config=opts.config)
     else:
         if server is not None:
-            print(server)
             central = Interface(server=server)
         else:
             print('Server not specified')
@@ -366,7 +475,10 @@ def main():
             # for each available scan
             for scan in sub_class.scan_dict.keys():
                 # download the scan
-                sub_class.download_scan(scan, dest)
+                if scan_repl_dict:
+                    sub_class.download_scan_unformatted(scan, dest, scan_repl_dict, bids_num_len)
+                else:
+                    sub_class.download_scan(scan, dest)
 
 
 if __name__ == "__main__":

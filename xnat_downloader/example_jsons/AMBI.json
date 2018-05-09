@@ -1,18 +1,23 @@
 {
-	"dcm_dir": "/home/james/Downloads",
-	"project": "VOSS_AGING",
-	"subjects": "ALL",
-	"session_labels": "None",
-	"sessions": "ALL",
+	"destination": "/home/james/Downloads/nonbids_download",
+	"project": "xnatDownload",
+	"subjects": ["21"],
+	"server": "https://central.xnat.org",
 	"zero_pad": 3,
-	"scans": ["anat","func","fmap","dwi","cbf"],
 	"scan_dict" : {
-					    "Field Map": ["fmap", "fieldmap"],
-					    "PU:fMRI SIMON": ["func", "task-simon_bold"],
-					    "PU:fMRI Resting State": ["func", "task-rest_bold"],
-					    "DTI - 60 Directions": ["dwi", "dwi"],
-					    "3D ASL": ["cbf", "aqc-asl_cbf"],
-					    "PU:SAG FSPGR BRAVO": ["anat", "T1w"],
-					    "Cerebral Blood Flow": ["cbf", "cbf"]
+							"SAG FSPGR BRAVO": "anat-T1w",
+					    "Field Map": "fmap",
+							"T1rho - SL50": "anat-T1rho_acq-SL50",
+							"T1rho - SL10 (NO AUTO PRESCAN)": "anat-T1rho_acq-SL10",
+							"fMRI Resting State": "func-bold_task-rest",
+							"fMRI SIMON": "func-bold_task-simon",
+							"DTI": "dwi",
+							"3D ASL": "func-asl",
+							"PROBE-SV 35": "mrs-fid",
+					    "PU:SAG FSPGR BRAVO": "anat-T1w_rec-pu",
+							"PU:fMRI Resting State": "func-bold_task-rest_rec-pu",
+							"PU:fMRI SIMON": "func-bold_task-simon_rec-pu",
+					    "Cerebral Blood Flow": "func-asl_rec-cbf",
+							"NOT DIAGNOSTIC: PFile-PROBE-SV 35": "mrs-fid_rec-pfile"
 					}
 }

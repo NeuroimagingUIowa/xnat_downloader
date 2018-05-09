@@ -6,7 +6,7 @@
 	"zero_pad": 3,
 	"scan_dict" : {
 							"SAG FSPGR BRAVO": "anat-T1w",
-					    "Field Map": "fmap",
+							"Field Map": "fmap",
 							"T1rho - SL50": "anat-T1rho_acq-SL50",
 							"T1rho - SL10 (NO AUTO PRESCAN)": "anat-T1rho_acq-SL10",
 							"fMRI Resting State": "func-bold_task-rest",
@@ -14,10 +14,10 @@
 							"DTI": "dwi",
 							"3D ASL": "func-asl",
 							"PROBE-SV 35": "mrs-fid",
-					    "PU:SAG FSPGR BRAVO": "anat-T1w_rec-pu",
+							"PU:SAG FSPGR BRAVO": "anat-T1w_rec-pu",
 							"PU:fMRI Resting State": "func-bold_task-rest_rec-pu",
 							"PU:fMRI SIMON": "func-bold_task-simon_rec-pu",
-					    "Cerebral Blood Flow": "func-asl_rec-cbf",
+							"Cerebral Blood Flow": "func-asl_rec-cbf",
 							"NOT DIAGNOSTIC: PFile-PROBE-SV 35": "mrs-fid_rec-pfile"
 					}
 }

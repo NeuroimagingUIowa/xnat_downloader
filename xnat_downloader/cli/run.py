@@ -394,6 +394,7 @@ class Subject:
             label = scan_pattern_dict[key]
             if label is not None:
                 if key == 'rec_ex':
+                    key = 'rec'
                     label = 'pu'
                 fname = '_'.join([fname, key + '-' + label])
 

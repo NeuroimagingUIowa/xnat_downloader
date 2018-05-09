@@ -22,22 +22,40 @@ jobs:
             docker run -ti --rm \
             hbclab/xnat_downloader:latest --help
       - run:
-          name: Run Docker image on test data
+          name: Run Docker image on bids test data
           command: |
-            docker run -ti --rm=false --name xnat_app \
+            docker run -ti --rm=false --name xnat_app_bids \
             hbclab/xnat_downloader:latest \
             -i /opt/xnatDownloader/tests/circleci_test.json \
             -c /opt/xnatDownloader/tests/central.cfg
       - run:
-          name: Check for output
+          name: 1 Check for output
           command: |
             mkdir -p /tmp/xnat/bids
-            docker cp xnat_app:/out /tmp/xnat/bids
-
+            docker cp xnat_app_bids:/out /tmp/xnat/bids
       - run:
-          name: Validate output
+          name: 1 Validate output
           command: |
             mkdir -p /tmp/test
-            find /tmp/xnat/bids/out -type f | sed s+/tmp/xnat/bids/out/++ | sort > /tmp/test/extend.out
-            diff /tmp/src/xnat_downloader/.circleci/extend.txt /tmp/test/extend.out
+            find /tmp/xnat/bids/out -type f | sed s+/tmp/xnat/bids/out/++ | sort > /tmp/test/bids.out
+            diff /tmp/src/xnat_downloader/.circleci/bids.txt /tmp/test/bids.out
+            exit $?
+      - run:
+          name: Run Docker image on non-bids test data
+          command: |
+            docker run -ti --rm=false --name xnat_app_nonbids \
+            hbclab/xnat_downloader:latest \
+            -i /opt/xnatDownloader/tests/non_bids_test.json \
+            -c /opt/xnatDownloader/tests/central.cfg
+      - run:
+          name: 2 Check for output
+          command: |
+            mkdir -p /tmp/xnat/nonbids
+            docker cp xnat_app_nonbids:/out /tmp/xnat/nonbids
+      - run:
+          name: 2 Validate output
+          command: |
+            mkdir -p /tmp/test
+            find /tmp/xnat/nonbids/out -type f | sed s+/tmp/xnat/nonbids/out/++ | sort > /tmp/test/nonbids.out
+            diff /tmp/src/xnat_downloader/.circleci/nonbids.txt /tmp/test/nonbids.out
             exit $?

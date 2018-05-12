@@ -22,10 +22,13 @@ The json file specifies what you want to download from xnat as well as where you
 - scans: (optional) The list of scan types you want to download (e.g. ["anat","func","fmap","dwi"]
 
 ## The Reproin heuristic
-Sequence names on the scanner must follow this specification to avoid manual
-conversion/handling:
+Sequence names on the scanner must follow this specification to avoid manual conversion/handling:
+
+```
   [PREFIX:]<seqtype[-label]>[_ses-<SESID>][_task-<TASKID>][_acq-<ACQLABEL>][_run-<RUNID>][_dir-<DIR>][<more BIDS>][__<custom>]
+
 where
+
  [PREFIX:] - leading capital letters followed by : are stripped/ignored
  <...> - value to be entered
  [...] - optional -- might be nearly mandatory for some modalities (e.g.,
@@ -86,3 +89,4 @@ __<custom> (optional)
   __dup0<number>  suffix.
 Although we still support "-" and "+" used within SESID and TASKID, their use is
 not recommended, thus not listed here
+```

@@ -239,8 +239,8 @@ class Subject:
             return 0
         bids_scan = scan_repl_dict[scan]
         # PU:task-rest_bold -> PU_task_rest_bold
-        # TODO: make this a regular expression
-        scan_dir = scan_id + '-' + scan.replace('-', '_').replace(':', '_').replace(' ', '_').replace('(', '_').replace(')', '_')
+        scan_fmt = re.sub('[\-\:\ \(\)]', '_', scan)
+        scan_dir = scan_id + '-' + scan_fmt
 
         dcm_outdir = os.path.join(dest, 'sourcedata')
         if not os.path.isdir(dcm_outdir):

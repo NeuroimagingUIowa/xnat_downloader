@@ -4,6 +4,7 @@
   "server": "https://central.xnat.org",
   "subjects": ["21"],
 	"sub_dict": {"21": "SEH021"},
+	"session_labels": ["pre", "post", "checkup"],
 	"scan_dict": {
     			  "SAG FSPGR BRAVO": "anat-T1w",
     			  "Field Map": "fmap",

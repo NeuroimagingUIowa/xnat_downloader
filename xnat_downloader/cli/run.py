@@ -144,11 +144,12 @@ class Subject:
         # initialize other attributes
         self.ses = False
         self.ses_dict = None
+        self.ses_name_dict = None
         self.ses_objs = None
         self.scan_dict = None
         self.scan_objs = None
 
-    def get_sessions(self, labels=None):
+    def get_sessions(self, labels=None, bids=True):
         """
         Retrieves the session objects for the subject
 
@@ -164,6 +165,40 @@ class Subject:
         """
         import re
 
+        def organize_sessions(ses_lst, labels):
+            from datetime import datetime
+
+            if len(ses_lst) < len(labels):
+                msg = """
+                      Warning, there are fewer sesses on xnat than there are
+                      labels in the json
+                      """
+                print(msg)
+                # shorten label list so that it's the same length
+                labels = labels[:len(ses_lst)]
+
+            dateobj_lst = []
+            for strdate in ses_lst:
+                try:
+                    dateobj_lst.append(datetime.strptime(strdate, "%Y%m%d_%H"))
+                except ValueError:
+                    dateobj_lst.append(datetime.strptime(strdate, "%Y%m%d"))
+
+            # sort the date objects
+            dateobj_lst.sort()
+
+            # rewrite the date objects as strings
+            strdate_lst = []
+            for dateobj in dateobj_lst:
+                tmp_str = dateobj.strftime("%Y%m%d_%-H")
+                if tmp_str.split('_')[1] == '0':
+                    strdate_lst.append(tmp_str.split('_')[0])
+                else:
+                    strdate_lst.append(tmp_str)
+            # example {'20180504_1': 'pre'}
+            label_dict = {ses: label for label, ses in zip(labels, strdate_lst)}
+            return label_dict
+
         if not self.sub:
             print('ERROR: no sessions can be found because subject does not exist')
             return 1
@@ -175,14 +210,30 @@ class Subject:
         else:
             self.ses = True
             self.ses_dict = {}
+            key_lst = []
             for ses_obj in self.ses_objs:
                 # remove "sub-<label>_ses-" from the session label
                 # this will not change a session label like 20180506
                 key = re.sub(r"^sub-[a-zA-Z0-9]+_ses-", r"", ses_obj.attrs.get('label'))
                 # add the session object if we want all sessions or if it matches
                 # a string in the labels list.
-                if labels is None or key in labels:
+                if labels is not None:
+                    if bids:
+                        if key in labels:
+                            self.ses_dict[key] = ses_obj
+                    else:
+                        key_lst.append(ses_obj.attrs.get('label'))
+                else:
                     self.ses_dict[key] = ses_obj
+
+            # sort the sessions and apply the labels in the order of the sorted sessions
+            # WARNING: this will not work if participant is missing a middle session
+            if not bids and labels is not None:
+                self.ses_name_dict = organize_sessions(key_lst, labels)
+                for ses_obj in self.ses_objs:
+                    key = ses_obj.attrs.get('label')
+                    if key in self.ses_name_dict.keys():
+                        self.ses_dict[key] = ses_obj
 
     def get_scans(self, ses_label, scan_labels=None):
         """
@@ -275,8 +326,12 @@ class Subject:
         else:
             sub_name = 'sub-' + self.sub_obj.attrs.get('label').zfill(bids_num_len)
 
-        # To capture cases where the session is named 20180508_2
-        ses_name = 'ses-' + ses_dir.replace('_', 's')
+        if self.ses_name_dict:
+            ses_name = 'ses-' + self.ses_name_dict[ses_dir]
+        else:
+            # To capture cases where the session is named 20180508_2
+            ses_name = 'ses-' + ses_dir.replace('_', 's')
+
         scan_pattern = re.compile(SCAN_EXPR)
 
         scan_pattern_dict = re.search(scan_pattern, bids_scan).groupdict()
@@ -308,6 +363,7 @@ class Subject:
 
         fname = '_'.join([fname, label])
 
+        print('the dcm dir is {dcm_dir}'.format(dcm_dir=dcm_dir))
         dcm2niix = 'dcm2niix -o {bids_dir} -f {fname} -z y -b y {dcm_dir}'.format(
             bids_dir=bids_dir,
             fname=fname,
@@ -478,7 +534,10 @@ def main():
         subject_dict[subject] = Subject(proj_obj, subject)
         sub_class = subject_dict[subject]
         # get the session objects
-        sub_class.get_sessions(session_labels)
+        if scan_repl_dict:
+            sub_class.get_sessions(session_labels, bids=False)
+        else:
+            sub_class.get_sessions(session_labels)
         # for every session
         for session in sub_class.ses_dict.keys():
             sub_class.get_scans(session, scan_labels)

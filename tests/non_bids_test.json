@@ -3,8 +3,7 @@
 	"project": "xnatDownload",
   "server": "https://central.xnat.org",
   "subjects": ["21"],
-	"sub_dict": {"21": "SEH21"},
-	"zero_pad": 3,
+	"sub_dict": {"21": "SEH021"},
 	"scan_dict" : {
     			  "SAG FSPGR BRAVO": "anat-T1w",
     			  "Field Map": "fmap",

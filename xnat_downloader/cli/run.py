@@ -271,7 +271,7 @@ class Subject:
                                'scans',
                                scan_dir)
         if sub_repl_dict:
-            sub_name = sub_repl_dict[self.sub_obj.attrs.get('label')]
+            sub_name = 'sub-' + sub_repl_dict[self.sub_obj.attrs.get('label')]
         else:
             sub_name = 'sub-' + self.sub_obj.attrs.get('label').zfill(bids_num_len)
 

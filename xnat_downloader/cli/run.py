@@ -39,13 +39,15 @@ def parse_json(json_file):
     zero_pad:
         Explicitly set how many digits you want your subject label to have
         (only useful for entirely numbered subject labels)
-    session_labels:
-        A list of session labels wished to be matched on
-        (e.g. [pre, post, active, passive])
     subjects:
         A list of subjects you wish to download scans from
-    scan_labels:
-        The scans you want to download
+    scan_dict:
+        a dictionary/hash table where the keys are the scan names on xnat
+        and the values are the reproin style scan names
+    sub_dict:
+        a dictionary/hash table where the keys are the subject labels on xnat
+        and the values are the modified subject labels that you want to be
+        displayed
 
     Returns
     -------
@@ -204,7 +206,8 @@ class Subject:
             if scan_labels is None or key in scan_labels:
                 self.scan_dict[key] = scan_obj
 
-    def download_scan_unformatted(self, scan, dest, scan_repl_dict, bids_num_len):
+    def download_scan_unformatted(self, scan, dest, scan_repl_dict, bids_num_len,
+                                  sub_repl_dict=None):
         """
         Downloads a particular scan session
 
@@ -267,8 +270,12 @@ class Subject:
                                ses_dir,
                                'scans',
                                scan_dir)
+        if sub_repl_dict:
+            sub_name = sub_repl_dict[self.sub_obj.attrs.get('label')]
+        else:
+            sub_name = 'sub-' + self.sub_obj.attrs.get('label').zfill(bids_num_len)
 
-        sub_name = 'sub-' + self.sub_obj.attrs.get('label').zfill(bids_num_len)
+        # To capture cases where the session is named 20180508_2
         ses_name = 'ses-' + ses_dir.replace('_', 's')
         scan_pattern = re.compile(SCAN_EXPR)
 
@@ -437,6 +444,7 @@ def main():
     bids_num_len = input_dict.get('zero_pad', False)
     dest = input_dict.get('destination', None)
     scan_repl_dict = input_dict.get('scan_dict', None)
+    sub_repl_dict = input_dict.get('sub_dict', None)
     # nii_dir = input_dict.get('nii_dir', False)  # not sure if this is needed
 
     if session_labels == "None":
@@ -478,7 +486,8 @@ def main():
             for scan in sub_class.scan_dict.keys():
                 # download the scan
                 if scan_repl_dict:
-                    sub_class.download_scan_unformatted(scan, dest, scan_repl_dict, bids_num_len)
+                    sub_class.download_scan_unformatted(scan, dest, scan_repl_dict, bids_num_len,
+                                                        sub_repl_dict)
                 else:
                     sub_class.download_scan(scan, dest)
 

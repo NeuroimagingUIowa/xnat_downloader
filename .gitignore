@@ -36,5 +36,7 @@ cmake-build-release/
 
 .idea
 
+# user specific
 .ipynb_checkpoints
 xnat_downloader.log
+docs/_build

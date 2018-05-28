@@ -85,25 +85,25 @@ jobs:
                 pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
                 docker images
               fi
-      - run:
-          name: Run Docker image on bids test data
-          command: |
-            mkdir -p /tmp/bidsTest/out
-            docker run -ti --rm=false -v /tmp/bids/out:/out \
-            jdkent/xnat_downloader:latest \
-            -i /opt/xnatDownloader/tests/bids_test.json \
-            -c /opt/xnatDownloader/tests/central.cfg
-      - run:
-          name: Check for outputs
-          command: |
-            mkdir -p /tmp/bidsTest/test
-            find /tmp/bidsTest/out -type f | sed s+/tmp/bidsTest/out/++ | sort > /tmp/bidsTest/test/bids.out
-            diff /tmp/src/xnat_downloader/.circleci/bids.txt /tmp/bidsTest/test/bids.out
-            exit $?
-      - store_artifacts:
-          path: /tmp/bidsTest/out
-      - store_artifacts:
-          path: /tmp/bidsTest/test
+        - run:
+            name: Run Docker image on bids test data
+            command: |
+              mkdir -p /tmp/bidsTest/out
+              docker run -ti --rm=false -v /tmp/bids/out:/out \
+              jdkent/xnat_downloader:latest \
+              -i /opt/xnatDownloader/tests/bids_test.json \
+              -c /opt/xnatDownloader/tests/central.cfg
+        - run:
+            name: Check for outputs
+            command: |
+              mkdir -p /tmp/bidsTest/test
+              find /tmp/bidsTest/out -type f | sed s+/tmp/bidsTest/out/++ | sort > /tmp/bidsTest/test/bids.out
+              diff /tmp/src/xnat_downloader/.circleci/bids.txt /tmp/bidsTest/test/bids.out
+              exit $?
+        - store_artifacts:
+            path: /tmp/bidsTest/out
+        - store_artifacts:
+            path: /tmp/bidsTest/test
 
   test_non_bids:
     machine:

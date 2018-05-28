@@ -90,7 +90,7 @@ jobs:
             name: Run Docker image on bids test data
             command: |
               mkdir -p /tmp/bidsTest/out
-              docker run -ti --rm=false -v /tmp/bids/out:/out \
+              docker run -ti --rm=false -v /tmp/bidsTest/out:/out \
               jdkent/xnat_downloader:latest \
               -i /opt/xnatDownloader/tests/bids_test.json \
               -c /opt/xnatDownloader/tests/central.cfg

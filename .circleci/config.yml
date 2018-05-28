@@ -201,7 +201,7 @@ workflows:
               tags:
                 only: /.*/
         
-         - test_non_bids:
+        - test_non_bids:
             requires:
               - build
             filters:
@@ -210,13 +210,13 @@ workflows:
               tags:
                 only: /.*/
 
-          - deploy:
-          requires:
-            - build
-            - test_non_bids
-            - test_bids
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /.*/
+        - deploy:
+            requires:
+              - build
+              - test_non_bids
+              - test_bids
+            filters:
+              branches:
+                ignore: /.*/
+              tags:
+                only: /.*/

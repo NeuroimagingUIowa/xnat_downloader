@@ -64,13 +64,14 @@ jobs:
           key: docker-v2-{{ .Branch }}-{{ epoch }}
           paths:
             - /tmp/cache/docker.tar.gz
+  
   test_bids:
       machine:
           image: circleci/classic:201711-01
       working_directory: /tmp/src/xnat_downloader
       steps:
         - checkout
-            path: /home/circleci/src/fmriprep
+            path: /home/circleci/src/xnat_downloader
         - attach_workspace:
             at: /tmp
         - run:
@@ -110,7 +111,7 @@ jobs:
     working_directory: /tmp/src/xnat_downloader
     steps:
       - checkout
-          path: /home/circleci/src/fmriprep
+          path: /home/circleci/src/xnat_downloader
       - attach_workspace:
           at: /tmp
       - run:

@@ -149,31 +149,31 @@ jobs:
   deploy:
     machine:
         image: circleci/classic:201711-01
-        working_directory: /tmp/src/mriqc
-        steps:
-          - attach_workspace:
-              at: /tmp
-          - run:
-              name: Load Docker image layer cache
-              no_output_timeout: 30m
-              command: |
-                docker info
-                set +o pipefail
-                if [ -f /tmp/cache/docker.tar.gz ]; then
-                  sudo apt update && sudo apt -y install pigz
-                  pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-                  docker images
-                fi
-          - run: 
-              name: deploy to docker
-              no_output_timeout: 40m
-              command: |
-                if [[ -n "$DOCKER_PASS" ]]; then
-                  docker login -u $DOCKER_USER -p $DOCKER_PASS
-                  docker push jdkent/xnat_downloader:latest
-                  docker tag jdkent/xnat_downloader jdkent/xnat_downloader:$CIRCLE_TAG
-                  docker push jdkent/xnat_downloader:$CIRCLE_TAG
-                fi
+    working_directory: /tmp/src/xnat_downloader
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 30m
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+      - run: 
+          name: deploy to docker
+          no_output_timeout: 40m
+          command: |
+            if [[ -n "$DOCKER_PASS" ]]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PASS
+              docker push jdkent/xnat_downloader:latest
+              docker tag jdkent/xnat_downloader jdkent/xnat_downloader:$CIRCLE_TAG
+              docker push jdkent/xnat_downloader:$CIRCLE_TAG
+            fi
 
 # run jobs in workflows
 workflows:

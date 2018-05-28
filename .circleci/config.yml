@@ -70,7 +70,7 @@ jobs:
           image: circleci/classic:201711-01
       working_directory: /tmp/src/xnat_downloader
       steps:
-        - checkout
+        - checkout:
             path: /home/circleci/src/xnat_downloader
         - attach_workspace:
             at: /tmp
@@ -110,7 +110,7 @@ jobs:
         image: circleci/classic:201711-01
     working_directory: /tmp/src/xnat_downloader
     steps:
-      - checkout
+      - checkout:
           path: /home/circleci/src/xnat_downloader
       - attach_workspace:
           at: /tmp

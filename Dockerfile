@@ -1,9 +1,8 @@
-# Use Neurodebian
-From neurodebian:trusty
+# use neurodebian
+FROM neurodebian:trusty
 
-MAINTAINER James Kent <james-kent@uiowa.edu>
 LABEL software='xnat_downloader'
-LABEL version="0.0.1_beta"
+LABEL version="0.2.0"
 
 ARG DEBIAN_FRONTED=noninteractive
 

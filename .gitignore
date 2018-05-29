@@ -40,3 +40,4 @@ cmake-build-release/
 .ipynb_checkpoints
 xnat_downloader.log
 **/_build/
+xnat_downloader_dev.code-workspace

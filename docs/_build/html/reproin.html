@@ -1,0 +1,177 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>reproin &#8212; xnat_downloader 0.2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="reproin">
+<span id="id1"></span><h1>reproin<a class="headerlink" href="#reproin" title="Permalink to this headline">¶</a></h1>
+<p>This is the reproin heuristic, copied from <a class="reference external" href="https://github.com/nipy/heudiconv/blob/master/heudiconv/heuristics/reproin.py">heudiconv</a></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">(AKA dbic-bids) Flexible heuristic to establish BIDS DataLad datasets hierarchy</span>
+<span class="go">Initially developed and deployed at Dartmouth Brain Imaging Center</span>
+<span class="go">(http://dbic.dartmouth.edu) using Siemens Prisma 3T under the umbrellas of the</span>
+<span class="go">Center of Reproducible Neuroimaging Computation (ReproNim, http://repronim.org)</span>
+<span class="go">and Center for Open Neuroscience (CON, http://centerforopenneuroscience.org).</span>
+<span class="gp">#</span><span class="c1"># Dataset ownership/location</span>
+<span class="go">Datasets will be arranged in a hierarchy similar to how study/exam cards are</span>
+<span class="go">arranged at the scanner console.  You should have</span>
+<span class="go">- &quot;region&quot; defined per each PI,</span>
+<span class="go">- on the first level most probably as PI_StudentOrRA/ (e.g., Gobbini_Matteo)</span>
+<span class="go">- StudyID_StudyName/   (e.g. 1002_faceangles)</span>
+<span class="go">    - Arbitrary name for the exam card -- it doesn&#39;t get into Study Description.</span>
+<span class="go">Selecting specific exam card would populate Study Description field using</span>
+<span class="go">aforementioned levels, which will be used by this heuristic to decide on the</span>
+<span class="go">location of the dataset.</span>
+<span class="go">In case of multiple sessions, it is recommended to generate separate &quot;cards&quot;</span>
+<span class="go">per each session.</span>
+<span class="gp">#</span><span class="c1"># Sequence naming on the scanner console</span>
+<span class="go">Sequence names on the scanner must follow this specification to avoid manual</span>
+<span class="go">conversion/handling:</span>
+<span class="go">[PREFIX:]&lt;seqtype[-label]&gt;[_ses-&lt;SESID&gt;][_task-&lt;TASKID&gt;][_acq-&lt;ACQLABEL&gt;][_run-&lt;RUNID&gt;][_dir-&lt;DIR&gt;][&lt;more BIDS&gt;][__&lt;custom&gt;]</span>
+<span class="go">where</span>
+<span class="go">[PREFIX:] - leading capital letters followed by : are stripped/ignored</span>
+<span class="go">&lt;...&gt; - value to be entered</span>
+<span class="go">[...] - optional -- might be nearly mandatory for some modalities (e.g.,</span>
+<span class="go">        run for functional) and very optional for others</span>
+<span class="go">*ID - alpha-numerical identifier (e.g. 01,02, pre, post, pre01) for a run,</span>
+<span class="go">    task, session. Note that makes more sense to use numerical values for</span>
+<span class="go">    RUNID (e.g., _run-01, _run-02) for obvious sorting and possibly</span>
+<span class="go">    descriptive ones for e.g. SESID (_ses-movie, _ses-localizer)</span>
+<span class="go">&lt;seqtype[-label]&gt;</span>
+<span class="go">a known BIDS sequence type which is usually a name of the folder under</span>
+<span class="go">subject&#39;s directory. And (optional) label is specific per sequence type</span>
+<span class="go">(e.g. typical &quot;bold&quot; for func, or &quot;T1w&quot; for &quot;anat&quot;), which could often</span>
+<span class="go">(but not always) be deduced from DICOM. Known to BIDS modalities are:</span>
+<span class="go">    anat - anatomical data.  Might also be collected multiple times across</span>
+<span class="go">            runs (e.g. if subject is taken out of magnet etc), so could</span>
+<span class="go">            (optionally) have &quot;_run&quot; definition attached. For &quot;standard anat&quot;</span>
+<span class="go">            labels, please consult to &quot;8.3 Anatomy imaging data&quot; but most</span>
+<span class="go">            common are &#39;T1w&#39;, &#39;T2w&#39;, &#39;angio&#39;</span>
+<span class="go">    func - functional (AKA task, including resting state) data.</span>
+<span class="go">            Typically contains multiple runs, and might have multiple different</span>
+<span class="go">            tasks different per each run</span>
+<span class="go">            (e.g. _task-memory_run-01, _task-oddball_run-02)</span>
+<span class="go">    fmap - field maps</span>
+<span class="go">    dwi  - diffusion weighted imaging (also can as well have runs)</span>
+<span class="go">_ses-&lt;SESID&gt; (optional)</span>
+<span class="go">    a session.  Having a single sequence within a study would make that study</span>
+<span class="go">    follow &quot;multi-session&quot; layout. A common practice to have a _ses specifier</span>
+<span class="go">    within the scout sequence name. You can either specify explicit session</span>
+<span class="go">    identifier (SESID) or just say to maintain, create (starts with 1).</span>
+<span class="go">    You can also use _ses-{date} in case of scanning phantoms or non-human</span>
+<span class="go">    subjects and wanting sessions to be coded by the acquisition date.</span>
+<span class="go">_task-&lt;TASKID&gt; (optional)</span>
+<span class="go">    a short name for a task performed during that run.  If not provided and it</span>
+<span class="go">    is a func sequence, _task-UNKNOWN will be automatically added to comply with</span>
+<span class="go">    BIDS. Consult http://www.cognitiveatlas.org/tasks on known tasks.</span>
+<span class="go">_acq-&lt;ACQLABEL&gt; (optional)</span>
+<span class="go">    a short custom label to distinguish a different set of parameters used for</span>
+<span class="go">    acquiring the same modality (e.g. _acq-highres, _acq-lowres  etc)</span>
+<span class="go">_run-&lt;RUNID&gt; (optional)</span>
+<span class="go">    a (typically functional) run. The same idea as with SESID.</span>
+<span class="go">_dir-[AP,PA,LR,RL,VD,DV] (optional)</span>
+<span class="go">    to be used for fmap images, whenever a pair of the SE images is collected</span>
+<span class="go">    to be used to estimate the fieldmap</span>
+<span class="go">&lt;more BIDS&gt; (optional)</span>
+<span class="go">    any other fields (e.g. _acq-) from BIDS acquisition</span>
+<span class="go">__&lt;custom&gt; (optional)</span>
+<span class="go">after two underscores any arbitrary comment which will not matter to how</span>
+<span class="go">layout in BIDS. But that one theoretically should not be necessary,</span>
+<span class="go">and (ab)use of it would just signal lack of thought while preparing sequence</span>
+<span class="go">name to start with since everything could have been expressed in BIDS fields.</span>
+<span class="gp">#</span><span class="c1"># Last moment checks/FAQ:</span>
+<span class="go">- Functional runs should have _task-&lt;TASKID&gt; field defined</span>
+<span class="go">- Do not use &quot;+&quot;, &quot;_&quot; or &quot;-&quot; within SESID, TASKID, ACQLABEL, RUNID,  so we</span>
+<span class="go">could detect &quot;canceled&quot; runs.</span>
+<span class="go">- If run was canceled -- just copy canceled run (with the same index) and re-run</span>
+<span class="go">it. Files with overlapping name will be considered duplicate/canceled session</span>
+<span class="go">and only the last one would remain.  The others would acquire</span>
+<span class="go">__dup0&lt;number&gt;  suffix.</span>
+<span class="go">Although we still support &quot;-&quot; and &quot;+&quot; used within SESID and TASKID, their use is</span>
+<span class="go">not recommended, thus not listed here</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">xnat_downloader</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, James Kent.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/reproin.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

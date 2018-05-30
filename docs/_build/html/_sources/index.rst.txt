@@ -5,15 +5,16 @@
 
 Welcome to xnat_downloader's documentation!
 ===========================================
+xnat_downloader takes dicoms from an xnat server and
+saves them in `BIDS <http://bids.neuroimaging.io/>`_ format
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-   
+    :maxdepth: 2
+    :caption: Contents:
+
    installation
-   JSON
-   changes
    usage
+   changes
    TODOs
 
 

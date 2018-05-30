@@ -32,23 +32,32 @@ def parse_json(json_file):
 
     JSON Keys
     ---------
-    destination:
+    destination: string
         Directory to construct the BIDS structure
-    project:
+    project: string
         project ID on xnat that you wish to download from
-    zero_pad:
+    zero_pad: int 
+        (DEPRECIATED), use num_digits instead
+    num_digits: int
         Explicitly set how many digits you want your subject label to have
         (only useful for entirely numbered subject labels)
-    subjects:
+    subjects: list
         A list of subjects you wish to download scans from
-    scan_dict:
+    scan_dict: dictionary
         a dictionary/hash table where the keys are the scan names on xnat
         and the values are the reproin style scan names
-    sub_dict:
+    sub_dict: dictionary
         a dictionary/hash table where the keys are the subject labels on xnat
         and the values are the modified subject labels that you want to be
         displayed
-
+    server: string
+        The base URL to the xnat server (e.g. "https://central.xnat.org")
+    session_labels: list
+        (optional) (non-BIDS) If you want to replace the names of the sessions
+        on xnat with your own list of scans.
+    scan_labels: list
+        (optional) a list of the scans you want to download (if you don't want to
+        download all the scans).
     Returns
     -------
     input_dict:
@@ -60,7 +69,7 @@ def parse_json(json_file):
         # print(str(input_dict))
     mandatory_keys = ['destination', 'project', 'server']
     optional_keys = ['zero_pad', 'session_labels', 'subjects', 'scan_labels',
-                     'scan_dict']
+                     'scan_dict', 'num_digits', 'sub_dict']
     total_keys = mandatory_keys+optional_keys
     # print("total_keys: "+str(total_keys))
     # are there any inputs in the json_file that are not supported?
@@ -495,11 +504,11 @@ def main():
     session_labels = input_dict.get('session_labels', None)
     scan_labels = input_dict.get('scan_labels', None)
     server = input_dict.get('server', None)
-    bids_num_len = input_dict.get('zero_pad', False)
+    bids_num_len = input_dict.get('zero_pad', False) # DEPRECIATED
+    bids_num_len = input_dict.get('num_digits', False)
     dest = input_dict.get('destination', None)
     scan_repl_dict = input_dict.get('scan_dict', None)
     sub_repl_dict = input_dict.get('sub_dict', None)
-    # nii_dir = input_dict.get('nii_dir', False)  # not sure if this is needed
 
     if session_labels == "None":
         session_labels = None

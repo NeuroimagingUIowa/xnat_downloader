@@ -1,11 +1,11 @@
 {
-	"destination": "/out",
-	"project": "xnatDownload",
+  "destination": "/out",
+  "project": "xnatDownload",
   "server": "https://central.xnat.org",
   "subjects": ["21"],
-	"sub_dict": {"21": "SEH021"},
-	"session_labels": ["pre", "post", "checkup"],
-	"scan_dict": {
+  "sub_dict": {"21": "SEH021"},
+  "session_labels": ["pre", "post", "checkup"],
+  "scan_dict": {
     			  "SAG FSPGR BRAVO": "anat-T1w",
     			  "Field Map": "fmap",
     			  "T1rho - SL50": "anat-T1rho_acq-SL50",
@@ -20,5 +20,5 @@
     			  "PU:fMRI SIMON": "func-bold_task-simon_rec-pu",
     			  "Cerebral Blood Flow": "func-asl_rec-cbf",
     			  "NOT DIAGNOSTIC: PFile-PROBE-SV 35": "mrs-fid_rec-pfile"
-	              }
+	            }
 }

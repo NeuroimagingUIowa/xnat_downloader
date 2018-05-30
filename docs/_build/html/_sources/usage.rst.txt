@@ -39,6 +39,14 @@ the data are downloaded from xnat.
 
     .. warning:: this will not behave as expected if the subject on xnat
                  has a missing "middle" session or an extra session.
+* **scan_labels**: list
+    (optional) a list of the scans you want to download (if you don't want to
+    download all the scans).
+* **num_digits**: int
+    (optional) an integer indicating how many digits the subject number should
+    have. For example if the subject number on xnat is 10, then setting
+    `num_digits` to 2 will not change the subject 10, but if `num_digits` was
+    set to 3 then subject 10 will be written as 010.
 * **scan_dict**: dictionary
     (conditionally required) (non-BIDS) required if your dicoms are not stored
     in a BIDS format on xnat. The keys to the dictionary are

@@ -85,8 +85,6 @@ def parse_cmdline():
                                                  'compatible directory format')
     parser.add_argument('-c', '--config', help='login file (contains user/pass info)',
                         default=False)
-    parser.add_argument('-b', '--bids',
-                        help='Assume data are stored in a BIDS-ish format on xnat')
     # Required arguments
     required_args = parser.add_argument_group('Required arguments')
     required_args.add_argument('-i', '--input_json',
@@ -293,7 +291,7 @@ class Subject:
             return 0
         bids_scan = scan_repl_dict[scan]
         # PU:task-rest_bold -> PU_task_rest_bold
-        scan_fmt = re.sub('[\-\:\ \(\)]', '_', scan)
+        scan_fmt = re.sub(r'[\-\:\ \(\)]', '_', scan)
         scan_dir = scan_id + '-' + scan_fmt
 
         dcm_outdir = os.path.join(dest, 'sourcedata')

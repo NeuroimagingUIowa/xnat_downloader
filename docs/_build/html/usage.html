@@ -1,0 +1,214 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Usage &#8212; xnat_downloader 0.2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: xnat_downloader [-h] [-c CONFIG] [-i INPUT_JSON]</span>
+
+<span class="go">xnat_downloader downloads xnat dicoms and saves them in BIDs compatible</span>
+<span class="go">directory format</span>
+
+<span class="go">optional arguments:</span>
+<span class="go">-h, --help  show this help message and exit</span>
+<span class="go">-c CONFIG, --config CONFIG  login file (contains user/pass info)</span>
+
+<span class="go">Required arguments:</span>
+<span class="go">-i INPUT_JSON, --input_json INPUT_JSON  json file defining inputs for this script.</span>
+</pre></div>
+</div>
+<div class="section" id="json-format">
+<h2>json format<a class="headerlink" href="#json-format" title="Permalink to this headline">¶</a></h2>
+<p>The json file has multiple fields specifying where and how
+the data are downloaded from xnat.</p>
+<ul>
+<li><dl class="first docutils">
+<dt><strong>destination</strong>: string</dt>
+<dd><p class="first last">(required) The absolute path to the
+output base directory of the BIDS dataset</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>project</strong>: string</dt>
+<dd><p class="first last">(required) The name of the project on xnat</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>server</strong>: string</dt>
+<dd><p class="first last">(required) The base URL to the xnat server (e.g. “<a class="reference external" href="https://central.xnat.org">https://central.xnat.org</a>”)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>subjects</strong>: list</dt>
+<dd><p class="first last">(optional) The subjects you wish to download from xnat.
+Use the subject names as they are seen on xnat.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>sub_dict</strong>: dictionary</dt>
+<dd><p class="first last">(optional) (non-BIDS) If you want to change the subject label
+that is not represented in the xnat subject name</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>session_labels</strong>: list</dt>
+<dd><p class="first">(optional) (non-BIDS) If you want to replace the names of the sessions
+on xnat with your own list of scans.</p>
+<div class="last admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">this will not behave as expected if the subject on xnat
+has a missing “middle” session or an extra session.</p>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>scan_dict</strong>: dictionary</dt>
+<dd><p class="first last">(conditionally required) (non-BIDS) required if your dicoms are not stored
+in a BIDS format on xnat. The keys to the dictionary are
+scan names as they are seen on xnat (e.g. “SAG FSPGR BRAVO”),
+and the values are the associated <a class="reference internal" href="reproin.html#reproin"><span class="std std-ref">reproin</span></a> (BIDS-ish)
+name for the scan (e.g. “anat-T1w”).</p>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="section" id="example-json">
+<h3>example json<a class="headerlink" href="#example-json" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;destination&quot;</span><span class="p">:</span> <span class="s2">&quot;/out&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;xnatDownload&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;server&quot;</span><span class="p">:</span> <span class="s2">&quot;https://central.xnat.org&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;subjects&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;21&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;sub_dict&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;21&quot;</span><span class="p">:</span> <span class="s2">&quot;SEH021&quot;</span><span class="p">},</span>
+  <span class="s2">&quot;session_labels&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pre&quot;</span><span class="p">,</span> <span class="s2">&quot;post&quot;</span><span class="p">,</span> <span class="s2">&quot;checkup&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;scan_dict&quot;</span><span class="p">:</span> <span class="p">{</span>
+    			  <span class="s2">&quot;SAG FSPGR BRAVO&quot;</span><span class="p">:</span> <span class="s2">&quot;anat-T1w&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;Field Map&quot;</span><span class="p">:</span> <span class="s2">&quot;fmap&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;T1rho - SL50&quot;</span><span class="p">:</span> <span class="s2">&quot;anat-T1rho_acq-SL50&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;T1rho - SL10 (NO AUTO PRESCAN)&quot;</span><span class="p">:</span> <span class="s2">&quot;anat-T1rho_acq-SL10&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;fMRI Resting State&quot;</span><span class="p">:</span> <span class="s2">&quot;func-bold_task-rest&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;fMRI SIMON&quot;</span><span class="p">:</span> <span class="s2">&quot;func-bold_task-simon&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;DTI&quot;</span><span class="p">:</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;3D ASL&quot;</span><span class="p">:</span> <span class="s2">&quot;func-asl&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;PROBE-SV 35&quot;</span><span class="p">:</span> <span class="s2">&quot;mrs-fid&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;PU:SAG FSPGR BRAVO&quot;</span><span class="p">:</span> <span class="s2">&quot;anat-T1w_rec-pu&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;PU:fMRI Resting State&quot;</span><span class="p">:</span> <span class="s2">&quot;func-bold_task-rest_rec-pu&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;PU:fMRI SIMON&quot;</span><span class="p">:</span> <span class="s2">&quot;func-bold_task-simon_rec-pu&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;Cerebral Blood Flow&quot;</span><span class="p">:</span> <span class="s2">&quot;func-asl_rec-cbf&quot;</span><span class="p">,</span>
+    			  <span class="s2">&quot;NOT DIAGNOSTIC: PFile-PROBE-SV 35&quot;</span><span class="p">:</span> <span class="s2">&quot;mrs-fid_rec-pfile&quot;</span>
+	            <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Once installed and the json file is configured,
+the final step is to call the command.</p>
+<p><strong>locally installed:</strong> (python2 only)</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">xnat_downloader -i /path/to/json/file.json</span>
+</pre></div>
+</div>
+<p><strong>via docker:</strong></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">docker run \</span>
+<span class="go">-v /path/to/out:/out \</span>
+<span class="go">-v /path/to/json/:/json \</span>
+<span class="go">jdkent:xnat_downloader \</span>
+<span class="go">-i /json/file.json</span>
+</pre></div>
+</div>
+<p><strong>Note</strong>: when calling via docker,
+the destination location should be specified
+relative to where the path is in the docker
+container, not on your machine.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">xnat_downloader</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, James Kent.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

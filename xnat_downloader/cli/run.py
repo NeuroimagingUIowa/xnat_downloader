@@ -294,7 +294,10 @@ class Subject:
         scan_par = self.scan_dict[scan].parent()
         # the number id given to a scan (1, 2, 3, 400, 500)
         scan_id = self.scan_dict[scan].id()
-
+        if scan not in scan_repl_dict[scan].keys():
+            print('{scan} not a part of dictionary, skipping')
+            return 0
+        
         bids_scan = scan_repl_dict[scan]
         # PU:task-rest_bold -> PU_task_rest_bold
         scan_fmt = re.sub(r'[\-\:\ \(\)]', '_', scan)

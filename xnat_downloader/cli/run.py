@@ -285,7 +285,7 @@ class Subject:
         from glob import glob
         if scan not in self.scan_dict.keys():
             print('{scan} is not available for download'.format(scan=scan))
-            return 1
+            return 0
 
         # No easy way to check for complete download
         # the session label (e.g. 20180613)
@@ -294,10 +294,7 @@ class Subject:
         scan_par = self.scan_dict[scan].parent()
         # the number id given to a scan (1, 2, 3, 400, 500)
         scan_id = self.scan_dict[scan].id()
-        # TODO: change this hardcoding
-        if scan_id == '1' or scan_id == '2':
-            print('scan is a localizer or setup scan')
-            return 0
+
         bids_scan = scan_repl_dict[scan]
         # PU:task-rest_bold -> PU_task_rest_bold
         scan_fmt = re.sub(r'[\-\:\ \(\)]', '_', scan)
@@ -342,7 +339,11 @@ class Subject:
         scan_pattern = re.compile(SCAN_EXPR)
 
         scan_pattern_dict = re.search(scan_pattern, bids_scan).groupdict()
-
+        # check if the modality is empty
+        if scan_pattern_dict['modality'] is None:
+            print('{scan} is not in BIDS, not converting'.format(scan=scan))
+            return 0
+        
         # build up the bids directory
         bids_dir = os.path.join(dest, sub_name, ses_name, scan_pattern_dict['modality'])
 
@@ -407,12 +408,10 @@ class Subject:
         scan_par = self.scan_dict[scan].parent()
         # the number id given to a scan (1, 2, 3, 400, 500)
         scan_id = self.scan_dict[scan].id()
-        if scan_id == '1' or scan_id == '2':
-            print('scan is a localizer or setup scan')
-            return 0
 
         # PU:task-rest_bold -> PU_task_rest_bold
-        scan_dir = scan_id + '-' + scan.replace('-', '_').replace(':', '_').replace(' ', '_')
+        scan_fmt = re.sub(r'[\-\:\ \(\)]', '_', scan)
+        scan_dir = scan_id + '-' + scan_fmt
 
         dcm_outdir = os.path.join(dest, 'sourcedata')
         if not os.path.isdir(dcm_outdir):
@@ -448,7 +447,9 @@ class Subject:
         # WARNING they will only be in the correct order if I am using
         # python3.6+
         scan_pattern_dict = re.search(scan_pattern, scan).groupdict()
-
+        if scan_pattern_dict['modality'] is None:
+            print('{scan} is not in BIDS, not converting'.format(scan=scan))
+            return 0
         # build up the bids directory
         bids_dir = os.path.join(dest, sub_name, ses_name, scan_pattern_dict['modality'])
 

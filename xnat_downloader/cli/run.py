@@ -294,7 +294,7 @@ class Subject:
         scan_par = self.scan_dict[scan].parent()
         # the number id given to a scan (1, 2, 3, 400, 500)
         scan_id = self.scan_dict[scan].id()
-        if scan not in scan_repl_dict[scan].keys():
+        if scan not in scan_repl_dict.keys():
             print('{scan} not a part of dictionary, skipping')
             return 0
         

@@ -3,7 +3,8 @@
   "project": "xnatDownload",
   "server": "https://central.xnat.org",
   "subjects": ["21"],
-  "sub_dict": {"21": "SEH021"},
+  "sub_dict": {"21": "021"},
+  "sub_label_prefix": "SEH",
   "session_labels": ["pre", "post", "checkup"],
   "scan_dict": {
     			  "SAG FSPGR BRAVO": "anat-T1w",

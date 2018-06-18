@@ -69,7 +69,7 @@ def parse_json(json_file):
         # print(str(input_dict))
     mandatory_keys = ['destination', 'project', 'server']
     optional_keys = ['zero_pad', 'session_labels', 'subjects', 'scan_labels',
-                     'scan_dict', 'num_digits', 'sub_dict']
+                     'scan_dict', 'num_digits', 'sub_dict', 'sub_label_prefix']
     total_keys = mandatory_keys+optional_keys
     # print("total_keys: "+str(total_keys))
     # are there any inputs in the json_file that are not supported?
@@ -265,7 +265,7 @@ class Subject:
                 self.scan_dict[key] = scan_obj
 
     def download_scan_unformatted(self, scan, dest, scan_repl_dict, bids_num_len,
-                                  sub_repl_dict=None):
+                                  sub_repl_dict=None, sub_label_prefix=None):
         """
         Downloads a particular scan session
 
@@ -346,7 +346,12 @@ class Subject:
         if scan_pattern_dict['modality'] is None:
             print('{scan} is not in BIDS, not converting'.format(scan=scan))
             return 0
-        
+
+        # adding additional information to scan label (such as GE120)
+        if sub_label_prefix is not None:
+            sub_label = sub_name.split('-')[1]
+            sub_name = 'sub-' + sub_label_prefix + sub_label
+
         # build up the bids directory
         bids_dir = os.path.join(dest, sub_name, ses_name, scan_pattern_dict['modality'])
 
@@ -385,7 +390,7 @@ class Subject:
         else:
             print('It appears the nifti file already exists for {scan}'.format(scan=scan))
 
-    def download_scan(self, scan, dest):
+    def download_scan(self, scan, dest, sub_label_prefix=None):
         """
         Downloads a particular scan session
 
@@ -453,6 +458,12 @@ class Subject:
         if scan_pattern_dict['modality'] is None:
             print('{scan} is not in BIDS, not converting'.format(scan=scan))
             return 0
+
+        # adding additional information to scan label (such as GE120)
+        if sub_label_prefix is not None:
+            sub_label = sub_name.split('-')[1]
+            sub_name = 'sub-' + sub_label_prefix + sub_label
+
         # build up the bids directory
         bids_dir = os.path.join(dest, sub_name, ses_name, scan_pattern_dict['modality'])
 
@@ -513,6 +524,7 @@ def main():
     dest = input_dict.get('destination', None)
     scan_repl_dict = input_dict.get('scan_dict', None)
     sub_repl_dict = input_dict.get('sub_dict', None)
+    sub_label_prefix = input_dict.get('sub_label_prefix', None)
 
     if session_labels == "None":
         session_labels = None
@@ -557,9 +569,9 @@ def main():
                 # download the scan
                 if scan_repl_dict:
                     sub_class.download_scan_unformatted(scan, dest, scan_repl_dict, bids_num_len,
-                                                        sub_repl_dict)
+                                                        sub_repl_dict, sub_label_prefix)
                 else:
-                    sub_class.download_scan(scan, dest)
+                    sub_class.download_scan(scan, dest, sub_label_prefix)
 
 
 if __name__ == "__main__":

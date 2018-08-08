@@ -464,6 +464,12 @@ class Subject:
             sub_label = sub_name.split('-')[1]
             sub_name = 'sub-' + sub_label_prefix + sub_label
 
+        # catch the weird case were subjects are not completely deleted from the xnat database,
+        # warning: poor fix
+        if dest is None or sub_name is None or ses_name is None or scan_pattern_dict['modality'] is None:
+            print('assuming subject {subject} does not exist on xnat, continuing'.format(subject=sub_name))
+            return 0
+
         # build up the bids directory
         bids_dir = os.path.join(dest, sub_name, ses_name, scan_pattern_dict['modality'])
 

@@ -469,6 +469,7 @@ class Subject:
         if dest is None or sub_name is None or ses_name is None or scan_pattern_dict['modality'] is None:
             print('assuming subject {subject} does not exist on xnat, continuing'.format(subject=sub_name))
             return 0
+
         # build up the bids directory
         bids_dir = os.path.join(dest, sub_name, ses_name, scan_pattern_dict['modality'])
 

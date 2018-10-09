@@ -5,5 +5,6 @@ if [ -z $(which conda) ]; then
     exit 1
 fi
 conda create -n xnat_downloader_env python=2.7 dcm2niix -c conda-forge -y
+source activate xnat_downloader_env
 python setup.py install
 

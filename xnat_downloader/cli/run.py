@@ -212,7 +212,7 @@ class Subject:
 
         self.ses_objs = list(self.sub_obj.experiments().get(''))
         if not self.ses_objs:
-            print('ERROR: No sessions were found')
+            print('WARNING: No sessions were found')
             self.ses = False
         else:
             self.ses = True
@@ -568,16 +568,17 @@ def main():
         else:
             sub_class.get_sessions(session_labels)
         # for every session
-        for session in sub_class.ses_dict.keys():
-            sub_class.get_scans(session, scan_labels)
-            # for each available scan
-            for scan in sub_class.scan_dict.keys():
-                # download the scan
-                if scan_repl_dict:
-                    sub_class.download_scan_unformatted(scan, dest, scan_repl_dict, bids_num_len,
-                                                        sub_repl_dict, sub_label_prefix)
-                else:
-                    sub_class.download_scan(scan, dest, sub_label_prefix)
+        if sub_class.ses:
+            for session in sub_class.ses_dict.keys():
+                sub_class.get_scans(session, scan_labels)
+                # for each available scan
+                for scan in sub_class.scan_dict.keys():
+                    # download the scan
+                    if scan_repl_dict:
+                        sub_class.download_scan_unformatted(scan, dest, scan_repl_dict, bids_num_len,
+                                                            sub_repl_dict, sub_label_prefix)
+                    else:
+                        sub_class.download_scan(scan, dest, sub_label_prefix)
 
 
 if __name__ == "__main__":

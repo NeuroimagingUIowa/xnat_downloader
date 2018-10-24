@@ -212,7 +212,7 @@ class Subject:
 
         self.ses_objs = list(self.sub_obj.experiments().get(''))
         if not self.ses_objs:
-            print('ERROR: No sessions were found')
+            print('WARNING: No sessions were found')
             self.ses = False
         else:
             self.ses = True

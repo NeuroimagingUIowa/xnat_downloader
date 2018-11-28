@@ -4,7 +4,7 @@ import os
 import logging
 import re
 from subprocess import call
-
+from time import sleep
 
 SCAN_EXPR = """\
 ^(?P<rec_ex>PU:)?\
@@ -318,10 +318,26 @@ class Subject:
                   """.format(potential_files[0])
             print(msg)
         else:
-            scan_par.scans().download(dest_dir=dcm_outdir,
-                                      type=scan,
-                                      extract=True,
-                                      removeZip=True)
+            # attempt to download dicoms (with a max of 5 tries)
+            max_retries = 5
+            for rtry in range(max_retries):
+                # track whether download succeeded
+                err=False
+                try:
+                    scan_par.scans().download(dest_dir=dcm_outdir,
+                                            type=scan,
+                                            extract=True,
+                                            removeZip=True)
+                except TypeError:
+                    print('download attempt {n} failed'.format(n=rtry + 1))
+                    err=True
+                    sleep(5)
+                finally:
+                    # break out of for loop if download succeeded
+                    if not err:
+                        break
+                    elif rtry == (max_retries - 1):
+                        raise TypeError("Could not download dicom")
 
         # getting information about the directories
         dcm_dir = os.path.join(dcm_outdir,
@@ -436,10 +452,25 @@ class Subject:
                   """.format(potential_files[0])
             print(msg)
         else:
-            scan_par.scans().download(dest_dir=dcm_outdir,
-                                      type=scan,
-                                      extract=True,
-                                      removeZip=True)
+            max_retries = 5
+            for rtry in range(max_retries):
+                # track whether download succeeded
+                err=False
+                try:
+                    scan_par.scans().download(dest_dir=dcm_outdir,
+                                            type=scan,
+                                            extract=True,
+                                            removeZip=True)
+                except TypeError:
+                    print('download attempt {n} failed'.format(n=rtry + 1))
+                    err=True
+                    sleep(5)
+                finally:
+                    # break out of for loop if download succeeded
+                    if not err:
+                        break
+                    elif rtry == (max_retries - 1):
+                        raise TypeError("Could not download dicom")
 
         # getting information about the directories
         dcm_dir = os.path.join(dcm_outdir,

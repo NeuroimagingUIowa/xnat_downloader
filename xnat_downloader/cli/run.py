@@ -579,6 +579,12 @@ def main():
             print('Server not specified')
             return 1
 
+    # check if you have access to any projects
+    if not central.select.projects().get():
+        msg = "You have no access to any projects in the server, " \
+              "please check your url, username, and password."
+        raise RuntimeError(msg)
+
     logging.info('###################################')
     proj_obj = central.select.project(project)
     if subjects is None:

@@ -14,6 +14,7 @@ saves them in `BIDS <http://bids.neuroimaging.io/>`_ format
 
    installation
    usage
+   faq
    changes
    TODOs
 

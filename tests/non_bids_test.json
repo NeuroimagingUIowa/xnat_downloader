@@ -15,7 +15,7 @@
     			  "fMRI SIMON": "func-bold_task-simon",
     			  "DTI": "dwi",
     			  "3D ASL": "func-asl",
-    			  "PROBE-SV 35": "mrs-fid",
+    			  "PROBE-SV/35": "mrs-fid",
     			  "PU:SAG FSPGR BRAVO": "anat-T1w_rec-pu",
     			  "PU:fMRI Resting State": "func-bold_task-rest_rec-pu",
     			  "PU:fMRI SIMON": "func-bold_task-simon_rec-pu",

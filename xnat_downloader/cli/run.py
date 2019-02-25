@@ -300,7 +300,7 @@ class Subject:
         
         bids_scan = scan_repl_dict[scan]
         # PU:task-rest_bold -> PU_task_rest_bold
-        scan_fmt = re.sub(r'[\-\:\ \(\)]', '_', scan)
+        scan_fmt = re.sub(r'[\-\:\ \(\)\/]', '_', scan)
         scan_dir = scan_id + '-' + scan_fmt
 
         dcm_outdir = os.path.join(dest, 'sourcedata')
@@ -434,7 +434,7 @@ class Subject:
         scan_id = self.scan_dict[scan].id()
 
         # PU:task-rest_bold -> PU_task_rest_bold
-        scan_fmt = re.sub(r'[\-\:\ \(\)]', '_', scan)
+        scan_fmt = re.sub(r'[\-\:\ \(\)\/]', '_', scan)
         scan_dir = scan_id + '-' + scan_fmt
 
         dcm_outdir = os.path.join(dest, 'sourcedata')

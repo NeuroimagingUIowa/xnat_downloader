@@ -326,6 +326,7 @@ class Subject:
                 try:
                     scan_par.scans().download(dest_dir=dcm_outdir,
                                             type=scan,
+                                            name=scan_fmt,
                                             extract=True,
                                             removeZip=True)
                 except TypeError:
@@ -459,6 +460,7 @@ class Subject:
                 try:
                     scan_par.scans().download(dest_dir=dcm_outdir,
                                             type=scan,
+                                            name=scan_fmt,
                                             extract=True,
                                             removeZip=True)
                 except TypeError:

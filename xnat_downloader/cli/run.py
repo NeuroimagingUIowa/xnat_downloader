@@ -295,12 +295,12 @@ class Subject:
         # the number id given to a scan (1, 2, 3, 400, 500)
         scan_id = self.scan_dict[scan].id()
         if scan not in scan_repl_dict.keys():
-            print('{scan} not a part of dictionary, skipping')
+            print('{scan} not a part of dictionary, skipping'.format(scan=scan))
             return 0
         
         bids_scan = scan_repl_dict[scan]
         # PU:task-rest_bold -> PU_task_rest_bold
-        scan_fmt = re.sub(r'[\-\:\ \(\)]', '_', scan)
+        scan_fmt = re.sub(r'[^\w]', '_', scan)
         scan_dir = scan_id + '-' + scan_fmt
 
         dcm_outdir = os.path.join(dest, 'sourcedata')
@@ -325,7 +325,8 @@ class Subject:
                 err=False
                 try:
                     scan_par.scans().download(dest_dir=dcm_outdir,
-                                            type=scan,
+                                            type=scan_id,
+                                            name=scan_fmt,
                                             extract=True,
                                             removeZip=True)
                 except TypeError:
@@ -434,7 +435,7 @@ class Subject:
         scan_id = self.scan_dict[scan].id()
 
         # PU:task-rest_bold -> PU_task_rest_bold
-        scan_fmt = re.sub(r'[\-\:\ \(\)]', '_', scan)
+        scan_fmt = re.sub(r'[^\w]', '_', scan)
         scan_dir = scan_id + '-' + scan_fmt
 
         dcm_outdir = os.path.join(dest, 'sourcedata')
@@ -458,7 +459,8 @@ class Subject:
                 err=False
                 try:
                     scan_par.scans().download(dest_dir=dcm_outdir,
-                                            type=scan,
+                                            type=scan_id,
+                                            name=scan_fmt,
                                             extract=True,
                                             removeZip=True)
                 except TypeError:

@@ -36,8 +36,8 @@ def parse_json(json_file):
         Directory to construct the BIDS structure
     project: string
         project ID on xnat that you wish to download from
-    zero_pad: int 
-        (DEPRECIATED), use num_digits instead
+    zero_pad: int
+        (DEPRECATED), use num_digits instead
     num_digits: int
         Explicitly set how many digits you want your subject label to have
         (only useful for entirely numbered subject labels)
@@ -94,6 +94,9 @@ def parse_cmdline():
                                                  'compatible directory format')
     parser.add_argument('-c', '--config', help='login file (contains user/pass info)',
                         default=False)
+    parser.add_argument('--scan-non-fmt', action="store_true",
+                        help="if subject and session use BIDS formatting, "
+                             "but the scans do not")
     # Required arguments
     required_args = parser.add_argument_group('Required arguments')
     required_args.add_argument('-i', '--input_json',
@@ -297,7 +300,7 @@ class Subject:
         if scan not in scan_repl_dict.keys():
             print('{scan} not a part of dictionary, skipping'.format(scan=scan))
             return 0
-        
+
         bids_scan = scan_repl_dict[scan]
         # PU:task-rest_bold -> PU_task_rest_bold
         scan_fmt = re.sub(r'[^\w]', '_', scan)
@@ -322,16 +325,16 @@ class Subject:
             max_retries = 5
             for rtry in range(max_retries):
                 # track whether download succeeded
-                err=False
+                err = False
                 try:
                     scan_par.scans().download(dest_dir=dcm_outdir,
-                                            type=scan_id,
-                                            name=scan_fmt,
-                                            extract=True,
-                                            removeZip=True)
+                                              type=scan_id,
+                                              name=scan_fmt,
+                                              extract=True,
+                                              removeZip=True)
                 except TypeError:
                     print('download attempt {n} failed'.format(n=rtry + 1))
-                    err=True
+                    err = True
                     sleep(5)
                 finally:
                     # break out of for loop if download succeeded
@@ -407,7 +410,7 @@ class Subject:
         else:
             print('It appears the nifti file already exists for {scan}'.format(scan=scan))
 
-    def download_scan(self, scan, dest, sub_label_prefix=None):
+    def download_scan(self, scan, dest, sub_label_prefix=None, scan_repl_dict=None):
         """
         Downloads a particular scan session
 
@@ -420,6 +423,13 @@ class Subject:
             Directory where the zip file will be saved.
             The actual dicoms will be saved under the general scheme
             <session_label>/scans/<scan_label>/resources/DICOM/files
+        sub_label_prefix: string
+            Add additional characters to the subject label (e.g. sub-01 -> sub-GE01)
+        scan_repl_dict: dict or None
+            while subject/session folders on xnat may be named in accordance to BIDS,
+            the scan names may not be (e.g. PU: anat-T1w).
+            This dictionary converts the scan names to their BIDS formatted counterparts.
+            (e.g. "PU: anat-T1w" -> "anat-T1w_rec-pu")
         """
         from glob import glob
         if scan not in self.scan_dict.keys():
@@ -433,6 +443,16 @@ class Subject:
         scan_par = self.scan_dict[scan].parent()
         # the number id given to a scan (1, 2, 3, 400, 500)
         scan_id = self.scan_dict[scan].id()
+
+        if scan_repl_dict:
+            if scan not in scan_repl_dict.keys():
+                print('{scan} not a part of dictionary, skipping'.format(scan=scan))
+                return 0
+        # check what the bids scan name "should" be
+        if scan_repl_dict:
+            bids_scan = scan_repl_dict[scan]
+        else:
+            bids_scan = scan
 
         # PU:task-rest_bold -> PU_task_rest_bold
         scan_fmt = re.sub(r'[^\w]', '_', scan)
@@ -456,16 +476,16 @@ class Subject:
             max_retries = 5
             for rtry in range(max_retries):
                 # track whether download succeeded
-                err=False
+                err = False
                 try:
                     scan_par.scans().download(dest_dir=dcm_outdir,
-                                            type=scan_id,
-                                            name=scan_fmt,
-                                            extract=True,
-                                            removeZip=True)
+                                              type=scan_id,
+                                              name=scan_fmt,
+                                              extract=True,
+                                              removeZip=True)
                 except TypeError:
                     print('download attempt {n} failed'.format(n=rtry + 1))
-                    err=True
+                    err = True
                     sleep(5)
                 finally:
                     # break out of for loop if download succeeded
@@ -487,7 +507,7 @@ class Subject:
 
         # WARNING they will only be in the correct order if I am using
         # python3.6+
-        scan_pattern_dict = re.search(scan_pattern, scan).groupdict()
+        scan_pattern_dict = re.search(scan_pattern, bids_scan).groupdict()
         if scan_pattern_dict['modality'] is None:
             print('{scan} is not in BIDS, not converting'.format(scan=scan))
             return 0
@@ -499,8 +519,13 @@ class Subject:
 
         # catch the weird case were subjects are not completely deleted from the xnat database,
         # warning: poor fix
-        if dest is None or sub_name is None or ses_name is None or scan_pattern_dict['modality'] is None:
-            print('assuming subject {subject} does not exist on xnat, continuing'.format(subject=sub_name))
+        if (
+                dest is None or
+                sub_name is None or
+                ses_name is None or
+                scan_pattern_dict['modality'] is None
+        ):
+            print('assuming {subject} does not exist on xnat, continuing'.format(subject=sub_name))
             return 0
 
         # build up the bids directory
@@ -558,7 +583,7 @@ def main():
     session_labels = input_dict.get('session_labels', None)
     scan_labels = input_dict.get('scan_labels', None)
     server = input_dict.get('server', None)
-    bids_num_len = input_dict.get('zero_pad', False) # DEPRECIATED
+    bids_num_len = input_dict.get('zero_pad', False)  # DEPRECATED
     bids_num_len = input_dict.get('num_digits', False)
     dest = input_dict.get('destination', None)
     scan_repl_dict = input_dict.get('scan_dict', None)
@@ -602,7 +627,9 @@ def main():
         subject_dict[subject] = Subject(proj_obj, subject)
         sub_class = subject_dict[subject]
         # get the session objects
-        if scan_repl_dict:
+        if scan_repl_dict and opts.scan_non_fmt:
+            sub_class.get_sessions(session_labels)
+        elif scan_repl_dict:
             sub_class.get_sessions(session_labels, bids=False)
         else:
             sub_class.get_sessions(session_labels)
@@ -613,9 +640,12 @@ def main():
                 # for each available scan
                 for scan in sub_class.scan_dict.keys():
                     # download the scan
-                    if scan_repl_dict:
-                        sub_class.download_scan_unformatted(scan, dest, scan_repl_dict, bids_num_len,
-                                                            sub_repl_dict, sub_label_prefix)
+                    if scan_repl_dict and opts.scan_non_fmt:
+                        sub_class.download_scan(scan, dest, sub_label_prefix, scan_repl_dict)
+                    elif scan_repl_dict:
+                        sub_class.download_scan_unformatted(scan, dest, scan_repl_dict,
+                                                            bids_num_len, sub_repl_dict,
+                                                            sub_label_prefix)
                     else:
                         sub_class.download_scan(scan, dest, sub_label_prefix)
 

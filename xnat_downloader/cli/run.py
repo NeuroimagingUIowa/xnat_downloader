@@ -660,9 +660,11 @@ def main():
                     elif scan_repl_dict:
                         sub_class.download_scan_unformatted(scan, dest, scan_repl_dict,
                                                             bids_num_len, sub_repl_dict,
-                                                            sub_label_prefix)
+                                                            sub_label_prefix,
+                                                            overwrite_nii=opts.overwrite_nii)
                     else:
-                        sub_class.download_scan(scan, dest, sub_label_prefix)
+                        sub_class.download_scan(scan, dest, sub_label_prefix,
+                                                overwrite_nii=opts.overwrite_nii)
 
 
 if __name__ == "__main__":

@@ -97,6 +97,8 @@ def parse_cmdline():
     parser.add_argument('--scan-non-fmt', action="store_true",
                         help="if subject and session use BIDS formatting, "
                              "but the scans do not")
+    parser.add_argument('--overwrite-nii', action='store_true',
+                        help='overwrite the nifti file if it exists')
     # Required arguments
     required_args = parser.add_argument_group('Required arguments')
     required_args.add_argument('-i', '--input_json',
@@ -268,7 +270,8 @@ class Subject:
                 self.scan_dict[key] = scan_obj
 
     def download_scan_unformatted(self, scan, dest, scan_repl_dict, bids_num_len,
-                                  sub_repl_dict=None, sub_label_prefix=None):
+                                  sub_repl_dict=None, sub_label_prefix=None,
+                                  overwrite_nii=False):
         """
         Downloads a particular scan session
 
@@ -281,9 +284,17 @@ class Subject:
             Directory where the zip file will be saved.
             The actual dicoms will be saved under the general scheme
             <session_label>/scans/<scan_label>/resources/DICOM/files
-        scan_dict: dictionary
+        bids_num_len: int
+            the number of integers to use to represent the subject label
+        scan_repl_dict: dict
             Dictionary containing terms to match the scan name on xnat with
             the reproin name of the scan
+        sub_label_prefix: string
+            prefix to add to the subject label (e.g. "AMBI")
+        sub_repl_dict: dict
+            dictionary to change the subject label based on its representation on xnat
+        overwrite_nii: bool
+            overwrite the output nifti file if it already exists
         """
         from glob import glob
         if scan not in self.scan_dict.keys():
@@ -405,12 +416,13 @@ class Subject:
             fname=fname,
             dcm_dir=dcm_dir)
         bids_outfile = os.path.join(bids_dir, fname + '.nii.gz')
-        if not os.path.exists(bids_outfile):
+        if not os.path.exists(bids_outfile) or overwrite_nii:
             call(dcm2niix, shell=True)
         else:
             print('It appears the nifti file already exists for {scan}'.format(scan=scan))
 
-    def download_scan(self, scan, dest, sub_label_prefix=None, scan_repl_dict=None):
+    def download_scan(self, scan, dest, sub_label_prefix=None, scan_repl_dict=None,
+                      overwrite_nii=False):
         """
         Downloads a particular scan session
 
@@ -430,6 +442,8 @@ class Subject:
             the scan names may not be (e.g. PU: anat-T1w).
             This dictionary converts the scan names to their BIDS formatted counterparts.
             (e.g. "PU: anat-T1w" -> "anat-T1w_rec-pu")
+        overwrite_nii: bool
+            overwrite the output nifti file if it already exists
         """
         from glob import glob
         if scan not in self.scan_dict.keys():
@@ -560,7 +574,7 @@ class Subject:
             fname=fname,
             dcm_dir=dcm_dir)
         bids_outfile = os.path.join(bids_dir, fname + '.nii.gz')
-        if not os.path.exists(bids_outfile):
+        if not os.path.exists(bids_outfile) or overwrite_nii:
             call(dcm2niix, shell=True)
         else:
             print('It appears the nifti file already exists for {scan}'.format(scan=scan))
@@ -641,7 +655,8 @@ def main():
                 for scan in sub_class.scan_dict.keys():
                     # download the scan
                     if scan_repl_dict and opts.scan_non_fmt:
-                        sub_class.download_scan(scan, dest, sub_label_prefix, scan_repl_dict)
+                        sub_class.download_scan(scan, dest, sub_label_prefix,
+                                                scan_repl_dict, overwrite_nii=opts.overwrite_nii)
                     elif scan_repl_dict:
                         sub_class.download_scan_unformatted(scan, dest, scan_repl_dict,
                                                             bids_num_len, sub_repl_dict,

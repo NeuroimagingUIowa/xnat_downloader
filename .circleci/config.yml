@@ -93,7 +93,7 @@ jobs:
               docker run -ti --rm=false -v /tmp/bidsTest/out:/out \
               jdkent/xnat_downloader:latest \
               -i /home/coder/project/tests/bids_test.json \
-              -c home/coder/project/tests/central.cfg
+              -c /home/coder/project/tests/central.cfg
         - run:
             name: Check for outputs
             command: |
@@ -133,7 +133,7 @@ jobs:
             docker run -ti --rm=false -v /tmp/nonbidsTest/out:/out \
             jdkent/xnat_downloader:latest \
             -i /home/coder/project/tests/non_bids_test.json \
-            -c home/coder/project/tests/central.cfg
+            -c /home/coder/project/tests/central.cfg
       - run:
           name: Check for outputs
           command: |

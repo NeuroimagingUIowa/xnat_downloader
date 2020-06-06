@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='xnat_downloader',
-      version='0.1',
+      version='0.2.8',
       description='(uiowa) Downloads xnat dicoms in a BIDS(ish) way',
       url='https://github.com/HBClab/xnat_downloader',
       author='James Kent',

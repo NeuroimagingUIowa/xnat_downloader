@@ -24,6 +24,7 @@ generate_docker(){
             create_env='neuro' \
             conda_install='python=2.7' \
         --run "conda init && . /home/coder/.bashrc && . activate neuro && pip install -e /home/coder/project/" \
+        --user=root \
         --entrypoint "xnat_downloader"
 }
 

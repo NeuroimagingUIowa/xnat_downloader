@@ -205,6 +205,7 @@ jobs:
             set +o pipefail
             if [ -f /tmp/cache/docker.tar.gz ]; then
               pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker tag jdkent/xnat_downloader:latest jdkent/xnat_downloader:unstable
               docker images
             fi
 

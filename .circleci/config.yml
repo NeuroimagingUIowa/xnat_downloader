@@ -181,6 +181,7 @@ jobs:
   build_devel:
     docker:
       - image: docker:18.01.0-ce-git
+    working_directory: /tmp/src/xnat_downloader
     steps:
       - setup_remote_docker
       - attach_workspace:
@@ -192,7 +193,7 @@ jobs:
       - restore_cache:
           keys:
             - docker_devel-v1-{{ .Branch }}-{{ epoch }}
-            - docker_devel-v2-{{ .Branch }}-
+            - docker_devel-v1-{{ .Branch }}-
             - docker_devel-v1-master-
             - docker_devel-v1-
           paths:
@@ -212,6 +213,7 @@ jobs:
           command: |
             docker build --cache-from jdkent/xnat_downloader:devel \
             -t jdkent/xnat_downloader:devel \
+            -f Dockerfile_devel \
             --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
             --build-arg VCS_REF=`git rev-parse --short HEAD` \
             --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" .

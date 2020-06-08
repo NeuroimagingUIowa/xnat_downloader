@@ -172,7 +172,7 @@ jobs:
               docker login -u $DOCKER_USER -p $DOCKER_PASS
               docker tag jdkent/xnat_downloader:latest jdkent/xnat_downloader:unstable
               docker push jdkent/xnat_downloader:unstable
-              if [[ -n "${CIRCLE_TAG}"]]; then
+              if [[ -n "${CIRCLE_TAG}" ]]; then
                 docker tag jdkent/xnat_downloader jdkent/xnat_downloader:$CIRCLE_TAG
                 docker push jdkent/xnat_downloader:$CIRCLE_TAG
               fi

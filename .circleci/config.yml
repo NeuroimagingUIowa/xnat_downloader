@@ -178,6 +178,91 @@ jobs:
               fi
             fi
 
+  build_devel:
+    docker:
+      - image: docker:18.01.0-ce-git
+    steps:
+      - setup_remote_docker
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Install pigz and python3
+          command: |
+            apk add --no-cache pigz python3
+      - restore_cache:
+          keys:
+            - docker_devel-v1-{{ .Branch }}-{{ epoch }}
+            - docker_devel-v2-{{ .Branch }}-
+            - docker_devel-v1-master-
+            - docker_devel-v1-
+          paths:
+            - /tmp/cache/docker_devel.tar.gz
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker_devel.tar.gz ]; then
+              pigz -d --stdout /tmp/cache/docker_devel.tar.gz | docker load
+              docker images
+            fi
+      - run:
+          name: Build Docker image
+          no_output_timeout: 60m
+          command: |
+            docker build --cache-from jdkent/xnat_downloader:devel \
+            -t jdkent/xnat_downloader:devel \
+            --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+            --build-arg VCS_REF=`git rev-parse --short HEAD` \
+            --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" .
+      - run:
+          name: Docker save
+          command: |
+            mkdir -p /tmp/cache
+            docker save jdkent/xnat_downloader:devel \
+            | pigz -8 -p 3 > /tmp/cache/docker_devel.tar.gz
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - cache/docker_devel.tar.gz
+  
+  update_devel_cache:
+    machine:
+        image: circleci/classic:201711-01
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - save_cache:
+          key: docker_devel-v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /tmp/cache/docker_devel.tar.gz
+
+  deploy_devel:
+    machine:
+        image: circleci/classic:201711-01
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 30m
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker_devel.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker_devel.tar.gz | docker load
+              docker images
+            fi
+      - run: 
+          name: deploy to docker
+          no_output_timeout: 40m
+          command: |
+            if [[ -n "$DOCKER_PASS" ]]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PASS
+              docker push jdkent/xnat_downloader:devel
+            fi
+
 # run jobs in workflows
 workflows:
     version: 2
@@ -196,7 +281,7 @@ workflows:
                 ignore: /docs?\/.*/
               tags:
                 only: /.*/
-        
+
         - test_bids:
             requires:
               - build
@@ -225,3 +310,29 @@ workflows:
                 only: master
               tags:
                 only: /.*/
+
+        - build_devel:
+            requires:
+              - build
+            filters:
+              branches:
+                only:
+                  - master
+                  - /devel?/.*/
+
+        - update_devel_cache:
+            requires:
+              - build_devel
+            filters:
+              branches:
+                only:
+                  - master
+                  - /devel?/.*/
+        
+        - deploy_devel:
+            requires:
+              - update_devel_cache
+            filters:
+              branches:
+                only:
+                  - master

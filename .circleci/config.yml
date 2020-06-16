@@ -89,22 +89,10 @@ jobs:
         - run:
             name: Run Docker image on bids test data
             command: |
-              mkdir -p /tmp/bidsTest/out
-              docker run -ti --rm=false -v /tmp/bidsTest/out:/out \
+              docker run -ti \
+              --entrypoint /bin/bash \
               jdkent/xnat_downloader:latest \
-              -i /home/coder/project/tests/bids_test.json \
-              -c /home/coder/project/tests/central.cfg
-        - run:
-            name: Check for outputs
-            command: |
-              mkdir -p /tmp/bidsTest/test
-              find /tmp/bidsTest/out -type f | sed s+/tmp/bidsTest/out/++ | sort > /tmp/bidsTest/test/bids.out
-              diff /tmp/src/xnat_downloader/.circleci/bids.txt /tmp/bidsTest/test/bids.out
-              exit $?
-        - store_artifacts:
-            path: /tmp/bidsTest/out
-        - store_artifacts:
-            path: /tmp/bidsTest/test
+              -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_bids'"
 
   test_non_bids:
     machine:
@@ -129,22 +117,10 @@ jobs:
       - run:
           name: Run Docker image on non-bids test data
           command: |
-            mkdir -p /tmp/nonbidsTest/out
-            docker run -ti --rm=false -v /tmp/nonbidsTest/out:/out \
-            jdkent/xnat_downloader:latest \
-            -i /home/coder/project/tests/non_bids_test.json \
-            -c /home/coder/project/tests/central.cfg
-      - run:
-          name: Check for outputs
-          command: |
-            mkdir -p /tmp/nonbidsTest/test
-            find /tmp/nonbidsTest/out -type f | sed s+/tmp/nonbidsTest/out/++ | sort > /tmp/nonbidsTest/test/nonbids.out
-            diff /tmp/src/xnat_downloader/.circleci/nonbids.txt /tmp/nonbidsTest/test/nonbids.out
-            exit $?
-      - store_artifacts:
-          path: /tmp/nonbidsTest/out
-      - store_artifacts:
-          path: /tmp/nonbidsTest/test
+            docker run -ti --rm=false \
+              --entrypoint /bin/bash \
+              jdkent/xnat_downloader:latest \
+              -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_nonbids'"
 
   deploy:
     machine:

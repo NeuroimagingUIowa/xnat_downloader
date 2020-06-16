@@ -1,5 +1,5 @@
 {
-  "destination": "/out",
+  "destination": "/tmp/nonbids",
   "project": "xnatDownload",
   "server": "https://central.xnat.org",
   "subjects": ["21"],

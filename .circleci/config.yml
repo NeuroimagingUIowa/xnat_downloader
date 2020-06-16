@@ -92,7 +92,7 @@ jobs:
               docker run -ti \
               --entrypoint /bin/bash \
               jdkent/xnat_downloader:latest \
-              bash -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_bids'"
+              -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_bids'"
 
   test_non_bids:
     machine:
@@ -120,7 +120,7 @@ jobs:
             docker run -ti --rm=false \
               --entrypoint /bin/bash \
               jdkent/xnat_downloader:latest \
-              bash -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_nonbids'"
+              -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_nonbids'"
 
   deploy:
     machine:

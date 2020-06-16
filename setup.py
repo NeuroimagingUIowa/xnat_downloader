@@ -14,6 +14,9 @@ setup(name='xnat_downloader',
         'cryptography',
         'pyOpenSSL',
       ],
+      extras_require={
+        'test': ['pytest'],
+      },
       entry_points={'console_scripts': [
             'xnat_downloader=xnat_downloader.cli.run:main'
         ]},

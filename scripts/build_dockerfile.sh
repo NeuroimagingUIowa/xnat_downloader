@@ -34,7 +34,6 @@ generate_docker_devel(){
     --pkg-manager=apt \
     --user=coder \
     --workdir="/home/coder" \
-    --run "pip install -e /home/coder/project[test]" \
     --env "SHELL=/bin/bash" \
     --run "curl -o /tmp/code-server.tar.gz -SL https://github.com/cdr/code-server/releases/download/3.0.2/code-server-3.0.2-linux-x86_64.tar.gz" \
     --run "mkdir -p /opt/codeserver && tar -xvf /tmp/code-server.tar.gz -C /opt/codeserver --strip-components=1" \

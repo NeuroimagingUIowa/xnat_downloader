@@ -37,7 +37,6 @@ cmake-build-release/
 .idea
 
 # user specific
-.vscode
 .ipynb_checkpoints
 xnat_downloader.log
 xnat_downloader_dev.code-workspace

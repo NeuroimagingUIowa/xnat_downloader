@@ -70,7 +70,7 @@ USER coder
 
 WORKDIR /home/coder
 
-ENV SHELL="/bin/bash"
+SHELL [ "/bin/bash", "--login", "-c" ]
 
 ENV CONDA_DIR="/opt/miniconda-latest" \
     PATH="/opt/miniconda-latest/bin:$PATH"
@@ -90,7 +90,12 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
            "python=2.7" \
     && sync && conda clean -y --all && sync
 
-RUN conda init && . /home/coder/.bashrc && . activate neuro && pip install -e /home/coder/project/[test]
+# make conda activate command available from /bin/bash --login shells
+RUN echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile
+
+RUN conda init bash
+
+RUN conda activate neuro && pip install -e /home/coder/project/[test]
 
 USER root
 

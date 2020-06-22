@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# currently not working since shell is not an option
 generate_docker(){
     docker run kaczmarj/neurodocker:0.7.0 generate docker \
         --base=neurodebian:stretch-non-free \
@@ -22,10 +23,14 @@ generate_docker(){
         --env "SHELL=/bin/bash" \
         --miniconda \
             create_env='neuro' \
+            activate=true \
             conda_install='python=2.7' \
-        --run "conda init && . /home/coder/.bashrc && . activate neuro && pip install -e /home/coder/project/[test]" \
+        --run 'echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile' \
+        --run "conda init bash" \
+        --run "conda activate neuro && pip install -e /home/coder/project/[test]" \
         --user=root \
-        --entrypoint "xnat_downloader"
+        --entrypoint "/neurodocker/startup.sh xnat_downloader"
+        # --shell "/bin/bash --login -c" \
 }
 
 generate_docker_devel(){

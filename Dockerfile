@@ -70,7 +70,7 @@ USER coder
 
 WORKDIR /home/coder
 
-ENV SHELL="/bin/bash"
+SHELL [ "/bin/bash", "--login", "-c" ]
 
 ENV CONDA_DIR="/opt/miniconda-latest" \
     PATH="/opt/miniconda-latest/bin:$PATH"
@@ -88,13 +88,19 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     && conda create -y -q --name neuro \
     && conda install -y -q --name neuro \
            "python=2.7" \
-    && sync && conda clean -y --all && sync
+    && sync && conda clean -y --all && sync \
+    && sed -i '$isource activate neuro' $ND_ENTRYPOINT
 
-RUN conda init && . /home/coder/.bashrc && . activate neuro && pip install -e /home/coder/project/[test]
+# make conda activate command available from /bin/bash --login shells
+RUN echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile
+
+RUN conda init bash
+
+RUN conda activate neuro && pip install -e /home/coder/project/[test]
 
 USER root
 
-ENTRYPOINT ["xnat_downloader"]
+ENTRYPOINT ["/neurodocker/startup.sh", "xnat_downloader"]
 
 RUN echo '{ \
     \n  "pkg_manager": "apt", \

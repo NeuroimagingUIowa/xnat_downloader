@@ -21,15 +21,16 @@ generate_docker(){
         --user=coder \
         --workdir="/home/coder" \
         --env "SHELL=/bin/bash" \
-        --shell "/bin/bash --login -c" \
         --miniconda \
             create_env='neuro' \
+            activate=true \
             conda_install='python=2.7' \
         --run 'echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile' \
         --run "conda init bash" \
         --run "conda activate neuro && pip install -e /home/coder/project/[test]" \
         --user=root \
-        --entrypoint "xnat_downloader"
+        --entrypoint "/neurodocker/startup.sh xnat_downloader"
+        # --shell "/bin/bash --login -c" \
 }
 
 generate_docker_devel(){

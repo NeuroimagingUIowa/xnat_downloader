@@ -48,8 +48,6 @@ USER coder
 
 WORKDIR /home/coder
 
-RUN pip install -e /home/coder/project[test]
-
 ENV SHELL="/bin/bash"
 
 RUN curl -o /tmp/code-server.tar.gz -SL https://github.com/cdr/code-server/releases/download/3.0.2/code-server-3.0.2-linux-x86_64.tar.gz

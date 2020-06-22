@@ -11,10 +11,10 @@ jobs:
             apk add --no-cache pigz python3
       - restore_cache:
           keys:
-            - docker-v2-{{ .Branch }}-{{ epoch }}
-            - docker-v2-{{ .Branch }}-
-            - docker-v2-master-
-            - docker-v2-
+            - docker-v3-{{ .Branch }}-{{ epoch }}
+            - docker-v3-{{ .Branch }}-
+            - docker-v3-master-
+            - docker-v3-
           paths:
             - /tmp/cache/docker.tar.gz
       - checkout
@@ -33,7 +33,7 @@ jobs:
           no_output_timeout: 60m
           command: |
             docker build --cache-from jdkent/xnat_downloader \
-            -t jdkent/xnat_downloader:latest \
+            -t jdkent/xnat_downloader:unstable \
             --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
             --build-arg VCS_REF=`git rev-parse --short HEAD` \
             --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" .
@@ -41,12 +41,12 @@ jobs:
           name: Execute Docker image
           command: |
             docker run -ti --rm \
-            jdkent/xnat_downloader:latest --help
+            jdkent/xnat_downloader:unstable --help
       - run:
           name: Docker save
           command: |
             mkdir -p /tmp/cache
-            docker save jdkent/xnat_downloader:latest \
+            docker save jdkent/xnat_downloader:unstable \
             | pigz -8 -p 3 > /tmp/cache/docker.tar.gz
       - persist_to_workspace:
           root: /tmp
@@ -62,7 +62,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - save_cache:
-          key: docker-v2-{{ .Branch }}-{{ epoch }}
+          key: docker-v3-{{ .Branch }}-{{ epoch }}
           paths:
             - /tmp/cache/docker.tar.gz
   
@@ -91,7 +91,7 @@ jobs:
             command: |
               docker run -ti \
               --entrypoint /bin/bash \
-              jdkent/xnat_downloader:latest \
+              jdkent/xnat_downloader:unstable \
               -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_bids'"
 
   test_non_bids:
@@ -119,7 +119,7 @@ jobs:
           command: |
             docker run -ti --rm=false \
               --entrypoint /bin/bash \
-              jdkent/xnat_downloader:latest \
+              jdkent/xnat_downloader:unstable \
               -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_nonbids'"
 
   deploy:
@@ -146,7 +146,6 @@ jobs:
           command: |
             if [[ -n "$DOCKER_PASS" ]]; then
               docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker tag jdkent/xnat_downloader:latest jdkent/xnat_downloader:unstable
               docker push jdkent/xnat_downloader:unstable
               if [[ -n "${CIRCLE_TAG}" ]]; then
                 docker tag jdkent/xnat_downloader jdkent/xnat_downloader:$CIRCLE_TAG
@@ -168,10 +167,10 @@ jobs:
             apk add --no-cache pigz python3
       - restore_cache:
           keys:
-            - docker_devel-v1-{{ .Branch }}-{{ epoch }}
-            - docker_devel-v1-{{ .Branch }}-
-            - docker_devel-v1-master-
-            - docker_devel-v1-
+            - docker_devel-v2-{{ .Branch }}-{{ epoch }}
+            - docker_devel-v2-{{ .Branch }}-
+            - docker_devel-v2-master-
+            - docker_devel-v2-
           paths:
             - /tmp/cache/docker_devel.tar.gz
       - run:
@@ -181,7 +180,6 @@ jobs:
             set +o pipefail
             if [ -f /tmp/cache/docker.tar.gz ]; then
               pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker tag jdkent/xnat_downloader:latest jdkent/xnat_downloader:unstable
               docker images
             fi
 
@@ -217,7 +215,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - save_cache:
-          key: docker_devel-v1-{{ .Branch }}-{{ epoch }}
+          key: docker_devel-v2-{{ .Branch }}-{{ epoch }}
           paths:
             - /tmp/cache/docker_devel.tar.gz
 

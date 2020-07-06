@@ -36,8 +36,6 @@ def parse_json(json_file):
         Directory to construct the BIDS structure
     project: string
         project ID on xnat that you wish to download from
-    zero_pad: int
-        (DEPRECATED), use num_digits instead
     num_digits: int
         Explicitly set how many digits you want your subject label to have
         (only useful for entirely numbered subject labels)
@@ -68,7 +66,7 @@ def parse_json(json_file):
         input_dict = json.load(json_input)
         # print(str(input_dict))
     mandatory_keys = ['destination', 'project', 'server']
-    optional_keys = ['zero_pad', 'session_labels', 'subjects', 'scan_labels',
+    optional_keys = ['session_labels', 'subjects', 'scan_labels',
                      'scan_dict', 'num_digits', 'sub_dict', 'sub_label_prefix']
     total_keys = mandatory_keys+optional_keys
     # print("total_keys: "+str(total_keys))
@@ -597,7 +595,6 @@ def main():
     session_labels = input_dict.get('session_labels', None)
     scan_labels = input_dict.get('scan_labels', None)
     server = input_dict.get('server', None)
-    bids_num_len = input_dict.get('zero_pad', False)  # DEPRECATED
     bids_num_len = input_dict.get('num_digits', False)
     dest = input_dict.get('destination', None)
     scan_repl_dict = input_dict.get('scan_dict', None)

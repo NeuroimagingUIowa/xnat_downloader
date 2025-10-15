@@ -315,7 +315,12 @@ class Subject:
         scan_fmt = re.sub(r'[^\w]', '_', scan)
         scan_dir = scan_id + '-' + scan_fmt
 
-        dcm_outdir = os.path.join(dest, 'sourcedata')
+        # Add subject ID folder to path of DICOM download so that sessions are organized by subject -jjs 5/1/2019
+        if getattr(self, "label", None) is None:
+            dcm_outdir = os.path.join(dest, 'sourcedata')
+        else:
+            dcm_outdir = os.path.join(dest, 'sourcedata', self.label)
+
         if not os.path.isdir(dcm_outdir):
             os.makedirs(dcm_outdir)
 

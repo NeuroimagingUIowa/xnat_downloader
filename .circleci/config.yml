@@ -7,6 +7,7 @@ executors:
     working_directory: /tmp/src/xnat_downloader
     environment:
       DOCKER_BUILDKIT: "1"
+      CIRCLE_REPOSITORY_URL: https://github.com/NeuroimagingUIowa/xnat_downloader.git
 
 commands:
   install_ci_dependencies:

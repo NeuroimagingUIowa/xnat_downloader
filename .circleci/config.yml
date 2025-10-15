@@ -120,7 +120,7 @@ jobs:
             docker run --rm \
               --entrypoint /bin/bash \
               jdkent/xnat_downloader:unstable \
-              -lc "source \"${CONDA_DIR}/etc/profile.d/conda.sh\" && conda activate neuro && pytest /home/coder/project/xnat_downloader/tests/test_cli.py -k test_cli_bids"
+              -lc 'source "${CONDA_DIR}/etc/profile.d/conda.sh" && conda activate neuro && pytest /home/coder/project/xnat_downloader/tests/test_cli.py -k test_cli_bids'
 
   test_non_bids:
     executor: docker-builder
@@ -140,7 +140,7 @@ jobs:
             docker run --rm \
               --entrypoint /bin/bash \
               jdkent/xnat_downloader:unstable \
-              -lc "source \"${CONDA_DIR}/etc/profile.d/conda.sh\" && conda activate neuro && pytest /home/coder/project/xnat_downloader/tests/test_cli.py -k test_cli_nonbids"
+              -lc 'source "${CONDA_DIR}/etc/profile.d/conda.sh" && conda activate neuro && pytest /home/coder/project/xnat_downloader/tests/test_cli.py -k test_cli_nonbids'
 
   deploy:
     executor: docker-builder

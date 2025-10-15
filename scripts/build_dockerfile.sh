@@ -36,23 +36,8 @@ generate_docker(){
         # --shell "/bin/bash --login -c" \
 }
 
-generate_docker_devel(){
-    docker run --rm repronim/neurodocker:2.0.0 generate docker \
-    --base-image=jdkent/xnat_downloader:unstable \
-    --pkg-manager=apt \
-    --user=coder \
-    --workdir="/home/coder" \
-    --env "SHELL=/bin/bash" \
-    --run "curl -o /tmp/code-server.tar.gz -SL https://github.com/cdr/code-server/releases/download/3.0.2/code-server-3.0.2-linux-x86_64.tar.gz" \
-    --run "mkdir -p /opt/codeserver && tar -xvf /tmp/code-server.tar.gz -C /opt/codeserver --strip-components=1" \
-    --run '/opt/codeserver/code-server --install-extension eamodio.gitlens && /opt/codeserver/code-server --install-extension ms-python.python' \
-    --entrypoint '/opt/codeserver/code-server --auth none --host 0.0.0.0 /home/coder/project'
-}
-
 if [ "$1" == "app" ]; then
     generate_docker
-elif [ "$1" == "devel" ]; then
-    generate_docker_devel
 else
     echo "unknown option"
 fi

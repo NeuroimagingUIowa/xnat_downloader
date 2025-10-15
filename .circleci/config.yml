@@ -7,7 +7,6 @@ executors:
     working_directory: /tmp/src/xnat_downloader
     environment:
       DOCKER_BUILDKIT: "1"
-      CIRCLE_REPOSITORY_URL: https://github.com/NeuroimagingUIowa/xnat_downloader.git
 
 commands:
   install_ci_dependencies:
@@ -17,7 +16,6 @@ commands:
           command: |
             sudo apt-get update
             sudo apt-get install -y pigz python3
-            git config --global url."https://github.com/".insteadOf git@github.com:
   ensure_cache_directory:
     steps:
       - run:

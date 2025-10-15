@@ -1,10 +1,22 @@
-#!/bin/bash 
+#!/usr/bin/env bash
 
-if [ -z $(which conda) ]; then
-    echo "please install anaconda, see here: https://www.anaconda.com/download/"
+set -euo pipefail
+
+ENV_NAME=${1:-xnat_downloader_env}
+
+if ! command -v conda >/dev/null 2>&1; then
+    echo "Conda is required. Download Miniconda or Miniforge from https://www.anaconda.com/download/ and retry."
     exit 1
 fi
-conda create -n xnat_downloader_env python=2.7 dcm2niix -c conda-forge -y
-source activate xnat_downloader_env
-python setup.py install
 
+# Ensure the current shell session is conda-aware.
+eval "$(conda shell.bash hook)"
+
+if ! conda env list | awk '{print $1}' | grep -Fxq "${ENV_NAME}"; then
+    conda create -n "${ENV_NAME}" python=3.13 dcm2niix -c conda-forge -y
+fi
+
+conda activate "${ENV_NAME}"
+
+python -m pip install --upgrade pip
+python -m pip install -e ".[test]"

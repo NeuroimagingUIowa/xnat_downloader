@@ -26,7 +26,7 @@ the data are downloaded from xnat.
 * **project**: string
     (required) The name of the project on xnat
 * **server**: string
-    (required) The base URL to the xnat server (e.g. "https://central.xnat.org")
+    (required) The base URL to the xnat server (e.g. "https://example.xnat.invalid")
 * **subjects**: list
     (optional) The subjects you wish to download from xnat.
     Use the subject names as they are seen on xnat.
@@ -61,7 +61,7 @@ example json
 Once installed and the json file is configured,
 the final step is to call the command.
 
-**locally installed:** (python2 only)
+**locally installed:**
 
 .. code-block:: console
 

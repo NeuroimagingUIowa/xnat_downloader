@@ -1,9 +1,7 @@
 """Testing basic functionality for xnat_downloader"""
-import os
 import fnmatch
+import os
 import shutil
-
-import pytest
 
 from ..cli.run import main
 

@@ -2,5 +2,5 @@
   "destination": "/tmp/bids",
   "project": "xnatDownload",
   "subjects": ["sub-001"],
-  "server": "https://central.xnat.org"
+  "server": "https://example.xnat.invalid"
 }

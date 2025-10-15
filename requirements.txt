@@ -1,2 +1,4 @@
-pyxnat
-xmltodict
+pyxnat>=1.6.3
+xmltodict>=0.13.0
+cryptography>=41.0.0
+pyopenssl>=23.2.0

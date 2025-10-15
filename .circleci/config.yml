@@ -1,320 +1,210 @@
-version: 2
-jobs:
-  build:
+version: 2.1
+
+executors:
+  docker-builder:
     docker:
-      - image: docker:18.01.0-ce-git
+      - image: cimg/base:stable
     working_directory: /tmp/src/xnat_downloader
+    environment:
+      DOCKER_BUILDKIT: "1"
+
+commands:
+  install_ci_dependencies:
     steps:
       - run:
-          name: Install pigz and python3
+          name: Install CI dependencies
           command: |
-            apk add --no-cache pigz python3
-      - restore_cache:
-          keys:
-            - docker-v3-{{ .Branch }}-{{ epoch }}
-            - docker-v3-{{ .Branch }}-
-            - docker-v3-master-
-            - docker-v3-
-          paths:
-            - /tmp/cache/docker.tar.gz
-      - checkout
-      - setup_remote_docker
+            sudo apt-get update
+            sudo apt-get install -y pigz python3
+  ensure_cache_directory:
+    steps:
+      - run:
+          name: Prepare cache directory
+          command: mkdir -p /tmp/cache
+  load_cached_image:
+    parameters:
+      archive:
+        type: string
+    steps:
       - run:
           name: Load Docker image layer cache
           command: |
             docker info
             set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+            if [ -f <<parameters.archive>> ]; then
+              pigz -d --stdout <<parameters.archive>> | docker load
               docker images
+            else
+              echo "No cached image found at <<parameters.archive>>"
             fi
+  save_image_to_archive:
+    parameters:
+      image:
+        type: string
+      archive:
+        type: string
+    steps:
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p "$(dirname <<parameters.archive>>)"
+            docker save <<parameters.image>> | pigz -8 -p 3 > <<parameters.archive>>
+
+jobs:
+  build:
+    executor: docker-builder
+    steps:
+      - checkout
+      - install_ci_dependencies
+      - ensure_cache_directory
+      - restore_cache:
+          keys:
+            - docker-v4-{{ .Branch }}-{{ .Revision }}
+            - docker-v4-{{ .Branch }}-
+            - docker-v4-
+      - setup_remote_docker
+      - load_cached_image:
+          archive: /tmp/cache/docker.tar.gz
+      - run:
+          name: Generate Dockerfile
+          command: ./scripts/build_dockerfile.sh app > Dockerfile
       - run:
           name: Build Docker image
           no_output_timeout: 60m
           command: |
-            docker build --cache-from jdkent/xnat_downloader \
-            -t jdkent/xnat_downloader:unstable \
-            --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-            --build-arg VCS_REF=`git rev-parse --short HEAD` \
-            --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" .
+            docker build \
+              --cache-from jdkent/xnat_downloader:unstable \
+              -t jdkent/xnat_downloader:unstable \
+              --build-arg BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+              --build-arg VCS_REF="$(git rev-parse --short HEAD)" \
+              --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" \
+              -f Dockerfile \
+              .
       - run:
           name: Execute Docker image
-          command: |
-            docker run -ti --rm \
-            jdkent/xnat_downloader:unstable --help
-      - run:
-          name: Docker save
-          command: |
-            mkdir -p /tmp/cache
-            docker save jdkent/xnat_downloader:unstable \
-            | pigz -8 -p 3 > /tmp/cache/docker.tar.gz
+          command: docker run --rm jdkent/xnat_downloader:unstable --help
+      - save_image_to_archive:
+          image: jdkent/xnat_downloader:unstable
+          archive: /tmp/cache/docker.tar.gz
       - persist_to_workspace:
           root: /tmp
           paths:
             - cache/docker.tar.gz
-            - src/xnat_downloader
-  
+
   update_cache:
-    machine:
-        image: circleci/classic:201711-01
-    working_directory: /tmp/src/xnat_downloader
+    executor: docker-builder
     steps:
       - attach_workspace:
           at: /tmp
+      - ensure_cache_directory
       - save_cache:
-          key: docker-v3-{{ .Branch }}-{{ epoch }}
+          key: docker-v4-{{ .Branch }}-{{ epoch }}
           paths:
             - /tmp/cache/docker.tar.gz
-  
+
   test_bids:
-      machine:
-          image: circleci/classic:201711-01
-      working_directory: /tmp/src/xnat_downloader
-      steps:
-        - checkout:
-            path: /home/circleci/src/xnat_downloader
-        - attach_workspace:
-            at: /tmp
-        - run:
-            name: Load Docker image layer cache
-            no_output_timeout: 30m
-            command: |
-              docker info
-              set +o pipefail
-              if [ -f /tmp/cache/docker.tar.gz ]; then
-                sudo apt update && sudo apt -y install pigz
-                pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-                docker images
-              fi
-        - run:
-            name: Run Docker image on bids test data
-            command: |
-              docker run -ti \
+    executor: docker-builder
+    steps:
+      - checkout
+      - install_ci_dependencies
+      - ensure_cache_directory
+      - attach_workspace:
+          at: /tmp
+      - setup_remote_docker
+      - load_cached_image:
+          archive: /tmp/cache/docker.tar.gz
+      - run:
+          name: Run Docker image on bids test data
+          no_output_timeout: 30m
+          command: |
+            docker run --rm \
               --entrypoint /bin/bash \
               jdkent/xnat_downloader:unstable \
-              -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_bids'"
+              -lc 'source "${CONDA_DIR}/etc/profile.d/conda.sh" && conda activate neuro && pytest /home/coder/project/xnat_downloader/tests/test_cli.py -k test_cli_bids'
 
   test_non_bids:
-    machine:
-        image: circleci/classic:201711-01
-    working_directory: /tmp/src/xnat_downloader
+    executor: docker-builder
     steps:
-      - checkout:
-          path: /home/circleci/src/xnat_downloader
+      - checkout
+      - install_ci_dependencies
+      - ensure_cache_directory
       - attach_workspace:
           at: /tmp
-      - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
-          command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              sudo apt update && sudo apt -y install pigz
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
-            fi
+      - setup_remote_docker
+      - load_cached_image:
+          archive: /tmp/cache/docker.tar.gz
       - run:
           name: Run Docker image on non-bids test data
+          no_output_timeout: 30m
           command: |
-            docker run -ti --rm=false \
+            docker run --rm \
               --entrypoint /bin/bash \
               jdkent/xnat_downloader:unstable \
-              -c "conda init && . /home/coder/.bashrc && . activate neuro && py.test /home/coder/project/xnat_downloader/tests/test_cli.py -k 'test_cli_nonbids'"
+              -lc 'source "${CONDA_DIR}/etc/profile.d/conda.sh" && conda activate neuro && pytest /home/coder/project/xnat_downloader/tests/test_cli.py -k test_cli_nonbids'
 
   deploy:
-    machine:
-        image: circleci/classic:201711-01
-    working_directory: /tmp/src/xnat_downloader
+    executor: docker-builder
     steps:
       - attach_workspace:
           at: /tmp
-      - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
-          command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              sudo apt update && sudo apt -y install pigz
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
-            fi
-      - run: 
-          name: deploy to docker
-          no_output_timeout: 40m
-          command: |
-            if [[ -n "$DOCKER_PASS" ]]; then
-              docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker push jdkent/xnat_downloader:unstable
-              if [[ -n "${CIRCLE_TAG}" ]]; then
-                docker tag jdkent/xnat_downloader jdkent/xnat_downloader:$CIRCLE_TAG
-                docker push jdkent/xnat_downloader:$CIRCLE_TAG
-              fi
-            fi
-
-  build_devel:
-    docker:
-      - image: docker:18.01.0-ce-git
-    working_directory: /tmp/src/xnat_downloader
-    steps:
+      - install_ci_dependencies
       - setup_remote_docker
-      - attach_workspace:
-          at: /tmp
+      - load_cached_image:
+          archive: /tmp/cache/docker.tar.gz
       - run:
-          name: Install pigz and python3
-          command: |
-            apk add --no-cache pigz python3
-      - restore_cache:
-          keys:
-            - docker_devel-v2-{{ .Branch }}-{{ epoch }}
-            - docker_devel-v2-{{ .Branch }}-
-            - docker_devel-v2-master-
-            - docker_devel-v2-
-          paths:
-            - /tmp/cache/docker_devel.tar.gz
-      - run:
-          name: Load Docker image layer cache
-          command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
-            fi
-
-            if [ -f /tmp/cache/docker_devel.tar.gz ]; then
-              pigz -d --stdout /tmp/cache/docker_devel.tar.gz | docker load
-              docker images
-            fi
-      - run:
-          name: Build Docker image
-          no_output_timeout: 60m
-          command: |
-            docker build --cache-from jdkent/xnat_downloader:devel \
-            -t jdkent/xnat_downloader:devel \
-            -f Dockerfile_devel \
-            --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-            --build-arg VCS_REF=`git rev-parse --short HEAD` \
-            --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" .
-      - run:
-          name: Docker save
-          command: |
-            mkdir -p /tmp/cache
-            docker save jdkent/xnat_downloader:devel \
-            | pigz -8 -p 3 > /tmp/cache/docker_devel.tar.gz
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - cache/docker_devel.tar.gz
-  
-  update_devel_cache:
-    machine:
-        image: circleci/classic:201711-01
-    steps:
-      - attach_workspace:
-          at: /tmp
-      - save_cache:
-          key: docker_devel-v2-{{ .Branch }}-{{ epoch }}
-          paths:
-            - /tmp/cache/docker_devel.tar.gz
-
-  deploy_devel:
-    machine:
-        image: circleci/classic:201711-01
-    steps:
-      - attach_workspace:
-          at: /tmp
-      - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
-          command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker_devel.tar.gz ]; then
-              sudo apt update && sudo apt -y install pigz
-              pigz -d --stdout /tmp/cache/docker_devel.tar.gz | docker load
-              docker images
-            fi
-      - run: 
-          name: deploy to docker
+          name: Deploy to Docker Hub
           no_output_timeout: 40m
           command: |
-            if [[ -n "$DOCKER_PASS" ]]; then
-              docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker push jdkent/xnat_downloader:devel
+            if [[ -n "${DOCKER_PASS:-}" ]]; then
+              echo "$DOCKER_PASS" | docker login --username "$DOCKER_USER" --password-stdin
+              docker push jdkent/xnat_downloader:unstable
+              if [[ -n "${CIRCLE_TAG:-}" ]]; then
+                docker tag jdkent/xnat_downloader:unstable jdkent/xnat_downloader:"$CIRCLE_TAG"
+                docker push jdkent/xnat_downloader:"$CIRCLE_TAG"
+              fi
+            else
+              echo "Skipping deploy because DOCKER_PASS is not set."
             fi
 
-# run jobs in workflows
 workflows:
-    version: 2
-    build_test_deploy:
-      jobs:
-        - build:
-            filters:
-              tags:
-                only: /.*/
-
-        - update_cache:
-            requires:
-              - build
-            filters:
-              branches:
-                ignore: /docs?\/.*/
-              tags:
-                only: /.*/
-
-        - test_bids:
-            requires:
-              - build
-            filters:
-              branches:
-                ignore: /docs?\/.*/
-              tags:
-                only: /.*/
-        
-        - test_non_bids:
-            requires:
-              - build
-            filters:
-              branches:
-                ignore: /docs?\/.*/
-              tags:
-                only: /.*/
-
-        - deploy:
-            requires:
-              - build
-              - test_non_bids
-              - test_bids
-            filters:
-              branches:
-                only: master
-              tags:
-                only: /.*/
-
-        - build_devel:
-            requires:
-              - build
-            filters:
-              branches:
-                only:
-                  - master
-                  - /.*devel.*/
-
-        - update_devel_cache:
-            requires:
-              - build_devel
-            filters:
-              branches:
-                only:
-                  - master
-                  - /.*devel.*/
-        
-        - deploy_devel:
-            requires:
-              - update_devel_cache
-            filters:
-              branches:
-                only:
-                  - master
+  version: 2
+  build_test_deploy:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - update_cache:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /docs?\/.*/
+            tags:
+              only: /.*/
+      - test_bids:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /docs?\/.*/
+            tags:
+              only: /.*/
+      - test_non_bids:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /docs?\/.*/
+            tags:
+              only: /.*/
+      - deploy:
+          requires:
+            - build
+            - test_non_bids
+            - test_bids
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/

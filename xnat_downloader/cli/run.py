@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from pyxnat import Interface
 import os
 import logging
@@ -49,7 +49,7 @@ def parse_json(json_file):
         and the values are the modified subject labels that you want to be
         displayed
     server: string
-        The base URL to the xnat server (e.g. "https://central.xnat.org")
+        The base URL to the xnat server (e.g. "https://example.xnat.invalid")
     session_labels: list
         (optional) (non-BIDS) If you want to replace the names of the sessions
         on xnat with your own list of scans.

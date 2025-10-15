@@ -30,8 +30,9 @@ generate_docker(){
             conda_install='python=3.13' \
         --user=coder \
         --run 'echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile' \
-        --run-bash 'source "${CONDA_DIR}/etc/profile.d/conda.sh" && conda activate neuro && pip install -e /home/coder/project/[test]' \
         --user=root \
+        --run-bash 'source "${CONDA_DIR}/etc/profile.d/conda.sh" && conda activate neuro && pip install --no-cache-dir -e /home/coder/project/[test]' \
+        --env 'PATH=/opt/miniconda-latest/envs/neuro/bin:/home/coder/.local/bin:$PATH' \
         --entrypoint "/neurodocker/startup.sh xnat_downloader"
         # --shell "/bin/bash --login -c" \
 }

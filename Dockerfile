@@ -80,8 +80,9 @@ RUN apt-get update -qq \
     && rm -rf ~/.cache/pip/*
 USER coder
 RUN echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile
-RUN bash -c 'source "${CONDA_DIR}/etc/profile.d/conda.sh" && conda activate neuro && pip install -e /home/coder/project/[test]'
 USER root
+RUN bash -c 'source "${CONDA_DIR}/etc/profile.d/conda.sh" && conda activate neuro && pip install --no-cache-dir -e /home/coder/project/[test]'
+ENV PATH="/opt/miniconda-latest/envs/neuro/bin:/home/coder/.local/bin:$PATH"
 ENTRYPOINT ["/neurodocker/startup.sh", "xnat_downloader"]
 
 # Save specification to JSON.
@@ -228,15 +229,21 @@ RUN printf '{ \
       } \
     }, \
     { \
-      "name": "run", \
-      "kwds": { \
-        "command": "bash -c '"'"'source \\"${CONDA_DIR}/etc/profile.d/conda.sh\\" && conda activate neuro && pip install -e /home/coder/project/[test]'"'"'" \
-      } \
-    }, \
-    { \
       "name": "user", \
       "kwds": { \
         "user": "root" \
+      } \
+    }, \
+    { \
+      "name": "run", \
+      "kwds": { \
+        "command": "bash -c '"'"'source \\"${CONDA_DIR}/etc/profile.d/conda.sh\\" && conda activate neuro && pip install --no-cache-dir -e /home/coder/project/[test]'"'"'" \
+      } \
+    }, \
+    { \
+      "name": "env", \
+      "kwds": { \
+        "PATH": "/opt/miniconda-latest/envs/neuro/bin:/home/coder/.local/bin:$PATH" \
       } \
     }, \
     { \

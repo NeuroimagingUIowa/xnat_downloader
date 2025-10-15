@@ -62,8 +62,7 @@ jobs:
             - docker-v4-{{ .Branch }}-{{ .Revision }}
             - docker-v4-{{ .Branch }}-
             - docker-v4-
-      - setup_remote_docker:
-          version: 24.0.5
+      - setup_remote_docker
       - load_cached_image:
           archive: /tmp/cache/docker.tar.gz
       - run:
@@ -111,8 +110,7 @@ jobs:
       - ensure_cache_directory
       - attach_workspace:
           at: /tmp
-      - setup_remote_docker:
-          version: 24.0.5
+      - setup_remote_docker
       - load_cached_image:
           archive: /tmp/cache/docker.tar.gz
       - run:
@@ -132,8 +130,7 @@ jobs:
       - ensure_cache_directory
       - attach_workspace:
           at: /tmp
-      - setup_remote_docker:
-          version: 24.0.5
+      - setup_remote_docker
       - load_cached_image:
           archive: /tmp/cache/docker.tar.gz
       - run:
@@ -151,8 +148,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - install_ci_dependencies
-      - setup_remote_docker:
-          version: 24.0.5
+      - setup_remote_docker
       - load_cached_image:
           archive: /tmp/cache/docker.tar.gz
       - run:
@@ -183,8 +179,7 @@ jobs:
             - docker_devel-v3-
       - attach_workspace:
           at: /tmp
-      - setup_remote_docker:
-          version: 24.0.5
+      - setup_remote_docker
       - load_cached_image:
           archive: /tmp/cache/docker.tar.gz
       - load_cached_image:
@@ -229,8 +224,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - install_ci_dependencies
-      - setup_remote_docker:
-          version: 24.0.5
+      - setup_remote_docker
       - load_cached_image:
           archive: /tmp/cache/docker_devel.tar.gz
       - run:

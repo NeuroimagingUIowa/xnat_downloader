@@ -152,6 +152,7 @@ class Subject:
         else:
             self.sub = True
         # initialize other attributes
+        self.label = label
         self.ses = False
         self.ses_dict = None
         self.ses_name_dict = None

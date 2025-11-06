@@ -1,6 +1,6 @@
-sourcedata/20180101/scans/1-SAG_FSPGR_BRAVO/resources/DICOM/files/pre_T1w.dcm
-sourcedata/20180202/scans/2-DTI/resources/DICOM/files/post_dti.dcm
-sourcedata/20180303/scans/3-fMRI_Resting_State/resources/DICOM/files/checkup_rest.dcm
+sourcedata/21/20180101/scans/1-SAG_FSPGR_BRAVO/resources/DICOM/files/pre_T1w.dcm
+sourcedata/21/20180202/scans/2-DTI/resources/DICOM/files/post_dti.dcm
+sourcedata/21/20180303/scans/3-fMRI_Resting_State/resources/DICOM/files/checkup_rest.dcm
 sub-SEH021/ses-checkup/func/sub-SEH021_ses-checkup_task-rest_bold.json
 sub-SEH021/ses-checkup/func/sub-SEH021_ses-checkup_task-rest_bold.nii.gz
 sub-SEH021/ses-post/dwi/sub-SEH021_ses-post_dwi.json
